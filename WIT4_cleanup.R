@@ -78,7 +78,7 @@ dat = dat %>%
 
 # TODO: Filter out Black subjects
 # TODO: Ask Hannah what race is which code.
-# dat = dat %>% 
-#   filter(Race.RESP != 2)
+dat = dat %>%
+  filter(Race.RESP != 2)
 
 write.table(dat, "clean_wit4.txt", sep = "\t", row.names = F)
