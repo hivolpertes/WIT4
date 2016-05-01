@@ -1,3 +1,7 @@
+# TODO: Consider random effects modeling in greater detail.
+#  Do I need random slopes of subject?
+#  Do I need random effects of ProbeType and CueType?
+
 library(plyr)
 library(dplyr)
 library(tidyr)

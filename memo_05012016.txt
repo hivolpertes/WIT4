@@ -1,0 +1,36 @@
+Hey gang,
+
+I've gone through and made a first quick pass at analyzing the WIT4 data.
+
+Again, our hypothesis was that we would see improved accuracy for White-Whatever trials, relative to White-Gun trials, in keeping with our previous observations of the response contrast phenomenon.
+
+Importantly, we expected to see this difference not only for White-Tool trials relative to White-Gun trials, which is old news, but also for White-Banana, White-Giraffe, White-Grip-strength-trainer, and White-Abstract trials. This would provide evidence against the hoary old counter-argument that we're just seeing "shifting associative content", in that relative to Blacks, Whites seem more tool-like, or abstract-like, or what the hell ever, because shifting associative content would probably not make Whites simultaneously more fruity, more animal, more abstract, and more grippy.
+
+Cleaning.
+Consistent with our previous projects, and with the pre-registration, we discard any Black subjects and any subjects performing not significantly (p < .01) above chance accuracy.
+
+Analysis.
+I fit hierarchical linear models for the 2 Condition (Gun & Tool targets, Gun & Neutral targets) × 2 Prime (White faces, Black faces) × 2 Target (Guns, Not-Guns) interaction, including a random intercept of subject. Accuracy was modeled by a binomial process, estimating the probability of getting a given trial correct given all the factors. Reaction time was modeled as normal.
+
+I plan to spend some time thinking and researching about other random factors that may be necessary to consider, e.g. random effects of specific stimuli within categories, or random slopes of trial types within subjects. But here are the results at present.
+
+Accuracy. The model found a significant Prime × Target interaction, such that accuracy was higher in Black-Gun and White-Other trials than in Black-Other and White-Gun trials (p < .001). The three-way Condition × Prime × Target interaction was not significant (p = .928), indicating that the 2×2 interaction was of indisinguishable magnitude whether in the Gun-Tool or Gun-Other condition.
+
+To test this more closely, I restricted the analysis to only the White-primed trials in each condition. In the classic Gun-Tool WIT, there was a significant effect of target (p = .039), such that White-Tool trials were more accurate than White-Gun trials. That's the same finding as we've always had. But in the new Gun-Other condition, there was also a significant effect of target (p < .001), such that White-giraffe, White-banana, etc. trials were more accurate than White-Gun trials.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Again, many thanks to the indefatiguable Hannah Volpert, without whose help I couldn't have gathered all this data.
+
