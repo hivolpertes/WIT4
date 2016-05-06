@@ -1,0 +1,31 @@
+The original data file is WIT_study2_raw.txt.
+
+In script 1_Scherer_Study2_Refine:
+	Irrelevant columns and rows are dropped.
+	Minority participants are labeled as such.
+	Two debug entries are removed.
+	Data is exported as "WIT_study2_refined.txt".
+
+
+In script 2_Scherer_Study2_QC:
+	A value for minimum acceptible accuracy is found.
+	Subjects who did not meet this minimum accuracy are identified.
+	These subject numbers are exported as "WIT_study2_badsubs.txt".
+
+In script 3_Scherer_Study2_grouping:
+	Bad and minority subjects are excluded.
+	Data is aggregated for each trial type within each subject, leaving a mean accuracy for a given trial type for each subject.
+	RT data for correct trials only are similarly aggregated within trial types within subjecs, leaving mean RTs.
+	These two DVs are exported in a single table, "WIT_study2_SASdat.txt".
+	Zimmerman primes could be excluded at this point -- but is commented out.
+
+In script 4_Scherer_Study2_PDP:
+	A and C parameter estimates are made for Hispanic primes for each subject.
+	Some analyses are conducted on these parameters via lme4 package.
+	This data is exported as datPDP2.txt
+
+In script 5_Scherer_Study2_tables:
+	Tables are made of means and SDs of accuracy and reaction time.
+
+Analyses are performed in SAS with 6_Study2_SAS-analysis.SAS and 7_Study2_SAS-analysis_PDP.SAS.
+
