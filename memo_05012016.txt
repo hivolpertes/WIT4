@@ -7,30 +7,29 @@ Again, our hypothesis was that we would see improved accuracy for White-Whatever
 Importantly, we expected to see this difference not only for White-Tool trials relative to White-Gun trials, which is old news, but also for White-Banana, White-Giraffe, White-Grip-strength-trainer, and White-Abstract trials. This would provide evidence against the hoary old counter-argument that we're just seeing "shifting associative content", in that relative to Blacks, Whites seem more tool-like, or abstract-like, or what the hell ever, because shifting associative content would probably not make Whites simultaneously more fruity, more animal, more abstract, and more grippy.
 
 Cleaning.
-Consistent with our previous projects, and with the pre-registration, we discard any Black subjects and any subjects performing not significantly (p < .01) above chance accuracy.
+Consistent with our previous projects, and with the pre-registration, we discard any Black subjects and any subjects performing not significantly (p < .01) above chance accuracy. I don't trust these participants to be cognitively engaged with the task in such a way that would allow effects of primes or targets. You can't show a weapons priming effect if you're mashing buttons at random while checking Instagram. Note that responses can fall outside the 500ms deadline and still be counted as correct by E-Prime, so it's not just a matter of them struggling to meet the deadline.
+
+Accuracy analyses are fit only to trials falling within the deadline. RT analyses are fit only to correct trials, even if they fell outside the deadline.
 
 Analysis.
-I fit hierarchical linear models for the 2 Condition (Gun & Tool targets, Gun & Neutral targets) × 2 Prime (White faces, Black faces) × 2 Target (Guns, Not-Guns) interaction, including a random intercept of subject. Accuracy was modeled by a binomial process, estimating the probability of getting a given trial correct given all the factors. Reaction time was modeled as normal.
+I fit hierarchical linear models for the 2 Condition (Gun & Tool targets, Gun & Neutral targets) × 2 Prime (White faces, Black faces) × 2 Target (Guns, Not-Guns) interaction, including a random intercept of subject. Accuracy was modeled by a binomial process, estimating the probability of getting a given trial correct given all the factors. Reaction time was modeled as normally-distributed, and results were very similar when modeling log-RT instead.
 
-I plan to spend some time thinking and researching about other random factors that may be necessary to consider, e.g. random effects of specific stimuli within categories, or random slopes of trial types within subjects. But here are the results at present.
+I plan to spend some time thinking and researching about other random factors that may be necessary to consider, e.g. random effects of specific stimuli within categories, or random slopes of trial types within subjects. But here are the results at present. I'm using contrast coding (effects coding) so that everything is relative to the grand mean, so we get main effects (i.e., effect of factor A across full sample) instead of simple effects (i.e., effect of factor A conditional on one level of factor B).
 
-Accuracy. The model found a significant Prime × Target interaction, such that accuracy was higher in Black-Gun and White-Other trials than in Black-Other and White-Gun trials (p < .001). The three-way Condition × Prime × Target interaction was not significant (p = .928), indicating that the 2×2 interaction was of indisinguishable magnitude whether in the Gun-Tool or Gun-Other condition.
+Accuracy. There was a small, not-quite significant effect of condition such that the Gun-Neutral condition was slightly less accurate than the Gun-Tool condition, OR = .887, p = .063. More importantly, there was a significant Prime × Target interaction, indicating that White-Other and Black-Gun trials were more accurate than Black-Other and White-Gun trials (OR = 0.883, p < .001). The three-way Condition × Prime × Target interaction was not significant (OR = 1.002, p = .928), indicating that the Prime × Target interaction was of statistically indistinguishable magnitude across the two conditions.
 
-To test this more closely, I restricted the analysis to only the White-primed trials in each condition. In the classic Gun-Tool WIT, there was a significant effect of target (p = .039), such that White-Tool trials were more accurate than White-Gun trials. That's the same finding as we've always had. But in the new Gun-Other condition, there was also a significant effect of target (p < .001), such that White-giraffe, White-banana, etc. trials were more accurate than White-Gun trials.
+To test this more closely, I restricted the analysis to only the White-primed trials in each condition. In the classic Gun-Tool WIT, there was a significant effect of target (OR = 1.121, p = .039), such that White-Tool trials were more accurate than White-Gun trials. That's the same finding as we've always had. But in the new Gun-Other condition, there was also a significant effect of target (OR = 1.173, p < .001), such that White-giraffe, White-banana, etc. trials were more accurate than White-Gun trials.
 
+Reaction Time. Here a lot of effects are significant, and again, their significance doesn't seem to depend on whether you log-transform the RTs or not. So I'll talk about them here in their original units.
 
+Reaction times are about 15ms slower in the Gun-Tool task than in the Gun-Neutral task, p < .001. Reaction times are about 3ms faster for Black primes than White primes, and 16ms faster for guns than for non-guns. There's also a Condition × Target interaction that is not important, wherein responses to non-gun stimuli were about 3.5 ms faster when those non-gun stimuli were our miscellaneous stimuli than when they were tools, p < .001.
 
+Importantly, this is qualified by the expected Prime × Target interaction, whereby Black-Gun and White-Nongun trials are about 3.5 ms faster than White-Gun and Black-Nongun trials, p < .001. And the three-way Condition × Prime × Target interaction is not significant, accounting for less than a half a millisecond, p = .712, again indicating that the Prime × Target interaction is of indistinguishable magnitude across conditions.
 
+Limitations.
+I still need to run all this again when restricting it to just the first 120 trials from the Gun-Other condition. Since we're arguing for similarities, not differences, across conditions, I don't think this is particularly important, but it's good to CYOA. I also need to figure out the best ways to account for potential random intercepts of stimuli and random slopes of subject.
 
+Summary
+As we predicted, when one prime category (Blacks) is associated with one target category (Guns), the other prime category (Whites) will prepare the other target category, even when that other target category is a ridiculous potpurri of a banana, a giraffe, a grip-strength trainer, and something from the Bauhaus period. At this point, a shifting-associative-content account of these findings would have to be so complex as to be unfalsifiable.
 
-
-
-
-
-
-
-
-
-
-Again, many thanks to the indefatiguable Hannah Volpert, without whose help I couldn't have gathered all this data.
-
+Again, many thanks to the indefatiguable Hannah Volpert, without whose help we wouldn't have all this data.

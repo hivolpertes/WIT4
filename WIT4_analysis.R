@@ -32,6 +32,11 @@ dat = dat %>%
          TrialClass = factor(TrialClass, 
                              levels = c("Black-Gun", "Black-Other", "White-Gun", "White-Other"))
   )
+# Convert factors to use contrast-coding for orthogonality
+# dat = dat %>% 
+#   mutate(Condition,
+#          CueClass,
+#          Probe)
 
 # Make correct-only dataset for RT analyses
 dat.rt = dat %>% 
@@ -43,8 +48,12 @@ dat.acc = dat %>%
 
 # Accuracy analyses ----
 # Does accuracy depend on 3-way interaction?
-mAcc = glmer(Probe.ACC ~ Condition * CueClass * Probe + (1|Subject),
-             data = dat.acc, family = "binomial")
+mAcc = glmer(Probe.ACC ~ Condition * CueClass * Probe + (1 + CueClass * Probe|Subject) + 
+               (1|ProbeType) + (1|CueType),
+             data = dat.acc, family = "binomial",
+             contrasts = list(Condition = contr.sum,
+                              CueClass = contr.sum,
+                              Probe = contr.sum))
 summary(mAcc)
 
 # Let's visualize the means
@@ -60,28 +69,39 @@ ggplot(meanACC, aes(x = TrialClass, y = accuracy)) +
 # Okay, so hypothesis is that you find the same 
 # (White-other - White-Gun) difference whether that "other" is
 # tools or miscellaneous goofy objects
+# This comes out great until you start adding random slopes or intercepts of Probe.
 mAcc.GunNeu = dat %>% 
   filter(Condition == "GunNeu", CueClass == "white") %>% 
-  glmer(Probe.ACC ~ Probe + (1|Subject), 
+  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType), 
         data = .,
-        family = "binomial")
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
 summary(mAcc.GunNeu) # Highly significant
 
 mAcc.GunTool = dat %>% 
   filter(Condition == "GunTool", CueClass == "white") %>% 
-  glmer(Probe.ACC ~ Probe + (1|Subject), 
+  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType), 
         data = .,
-        family = "binomial")
-summary(mAcc.GunTool) # Just significant, p = .039
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(mAcc.GunTool) # Just significant, p = .039 if no random slope of Probe, n.s. with random slope of probe
 
 # Bayes -- how much evidence do I have against 3-way interaction?
 # Well, BayesFactor doesn't do binomial outcomes yet, does it now?
 
 # RT analyses ----
-mRT = lmer(Probe.ACC ~ Condition * CueClass * Probe + (1|Subject),
-            data = dat.rt)
+mRT = lmer(Probe.RT ~ Condition * CueClass * Probe + (1|Subject),
+            data = dat.rt,
+           contrasts = list(Condition = contr.sum,
+                            CueClass = contr.sum,
+                            Probe = contr.sum))
 summary(mRT)
 Anova(mRT, type = 3) # uh, okay, so everything is wildly significant?
+
+mRT2 = lmer(log(Probe.RT) ~ Condition * CueClass * Probe + (1|Subject),
+           data = dat.rt)
+summary(mRT2)
+Anova(mRT2, type = 3)
 
 meanRT = dat.rt %>% 
   group_by(Condition, TrialClass) %>% 
@@ -114,7 +134,8 @@ dat.acc %>%
   ggplot(aes(x = TrialClass, y = Accuracy)) +
   facet_wrap(~Condition) +
   geom_violin() +
-  geom_boxplot(width = .15, notch = T)
+  geom_boxplot(width = .2, notch = T) +
+  ggtitle("Violin & box plots of cell mean accuracy per subject")
 
 dat.rt %>% 
   group_by(Subject, TrialClass, Condition) %>% 
@@ -122,4 +143,5 @@ dat.rt %>%
   ggplot(aes(x = TrialClass, y = `Reaction Time`)) +
   facet_wrap(~Condition) +
   geom_violin() +
-  geom_boxplot(width = .15, notch = T)
+  geom_boxplot(width = .2, notch = T) +
+  ggtitle("Violin & box plots of cell mean RT per subject")
