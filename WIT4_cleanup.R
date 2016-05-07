@@ -6,7 +6,7 @@ library(lme4)
 library(car)
 
 # Data ingest ----
-dat.raw = read.delim("./rawdata/Merge105.txt")
+dat.raw = read.delim("./rawdata/WIT_study4_raw.txt")
 
 # Discard excess E-Prime junk columns
 dat = dat.raw %>% 
