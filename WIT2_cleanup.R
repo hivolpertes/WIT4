@@ -1,5 +1,5 @@
 #NOTE: SCHERER_2013_D.TXT IS INSUFFICIENT, AS i WILL NEED THE SPECIFIC FACE.BMP INFORMATION
-#I AM ALSO CURIOUS TO INSPECT THE DATE & TIME INFORMATION FOR SUBJECT 1
+#  I AM ALSO CURIOUS TO INSPECT THE DATE & TIME INFORMATION FOR SUBJECT 1
 
 # Script 1:
 # Scherer Study 2 Preprocessing
@@ -7,7 +7,8 @@
 # eliminates some redundant columns
 # and appends subject race.
 
-# after this, it's time for Script 2 to detect bad subjects
+# It also deletes participants with
+# accuracy not sig. above chance
 
 # Input is Scherer_2013_raw.txt
 # Output is WIT_study2_refined.txt
@@ -50,7 +51,28 @@ dat$race[dat$Subject %in% c(2,3,33,54,84) ] = "asian"
 dat$race[dat$Subject %in% c(4,8,10,14,15,18,27,28,44,45,52,67,68,81,82)] = "african"
 length(unique(dat$Subject)) 
 
-# Now why would I do a thing like this?
-colnames(dat)[colnames(dat)=="Subject"] = "sub" #renaming Subject column
+# Exclude those participants who are not significantly better than chance
+# not sure whether alpha = .05 or alpha = .01 (or any difference)
+
+mean.acc = dat %>% 
+  group_by(Subject) %>% 
+  summarize(accuracy = mean(Probe.ACC, na.rm = T),
+            trials = n())
+# Are subjects with <20% accuracy performing reversed mapping, 
+#  or are they not responding?
+hist(mean.acc$accuracy)
+# What's necessary accuracy for p < .01 above chance in 256 trials?
+qbinom(.99, 288, .5, lower.tail = T)/288
+# Must be 56.9% accurate to ride
+hist(mean.acc$accuracy)
+abline(v = .569, col = 'red')
+bad = mean.acc$Subject[mean.acc$accuracy < .569]
+
+# Filter out bad-accuracy subjects
+dat = dat %>% 
+  filter(!(Subject %in% bad))
+# Filter out black participants
+dat = dat %>% 
+  filter(!(race == "african"))
 
 write.table(dat, file="clean_wit2.txt", sep="\t", row.names=F)
