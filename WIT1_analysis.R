@@ -5,9 +5,12 @@ library(dplyr)
 library(lme4)
 library(ggplot2)
 library(car)
+library(broom)
 
 # data ingest
 dat = read.delim("clean_wit1.txt", stringsAsFactors = F)
+# Make Subject a factor
+dat = mutate(dat, Subject = as.factor(Subject))
 
 # add columns -- see 7_Study1_Sas-analysis
 # this is still WIP, might not need it
@@ -91,25 +94,33 @@ Anova(pm3, type = 3) # Again a big flip
 
 # Condition on Prime and look for the interactions with Condition
 
-pm1 = dat.rt %>% 
+pm1.rt = dat.rt %>% 
   filter(Cue == "Black") %>% 
   lmer(Probe.RT ~ Condition * Probe + (1|Subject),
-        data = .)
-summary(pm1)
-Anova(pm1, type = 3)
+       data = .)
+summary(pm1.rt)
+Anova(pm1.rt, type = 3)
 
-pm2 = dat.rt %>% 
+pm2.rt = dat.rt %>% 
   filter(Cue == "White") %>% 
   lmer(Probe.RT ~ Condition * Probe + (1|Subject),
         data = .)
-summary(pm2)
-Anova(pm2, type = 3) # Note the big flip
+summary(pm2.rt)
+Anova(pm2.rt, type = 3) # Note the big flip
 
-pm3 = dat.rt %>% 
+pm3.rt = dat.rt %>% 
   filter(Cue == "Neutral") %>% 
   lmer(Probe.RT ~ Condition * Probe + (1|Subject),
         data = .)
-summary(pm3)
-Anova(pm3, type = 3) # Again a big flip
+summary(pm3.rt)
+Anova(pm3.rt, type = 3) # Again a big flip
 
 # Now the trick will be formalizing this in some sort of effect size...
+
+# This isn't grouping by Subject appropriately. Why?
+dat.acc %>% 
+  group_by(Subject, Condition, TrialType) %>% 
+  summarize(Accuracy = mean(Probe.ACC, na.rm = T)) %>% 
+  ggplot(aes(x = TrialType, y = Accuracy)) +
+  geom_violin() +
+  facet_wrap(~Condition)
