@@ -39,29 +39,69 @@ m1.rt = dat.rt %>%
   filter(Cue == "hisp") %>% 
   lmer(Probe.RT ~ Condition * Probe + (1|Subject), data = .)
 summary(m1.rt)
-Anova(m1.rt)
+Anova(m1.rt, type = 3)
 
 # each 2x2 interaction within levels of condition
+# Accuracy
 m2 = dat.acc %>% 
   filter(Condition == "BlackHisp") %>% 
   glmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
         data = ., family = "binomial")
 summary(m2)
-Anova(m2)
+Anova(m2, type = 3)
 
 m3 = dat.acc %>% 
   filter(Condition == "neutHisp") %>% 
   glmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
         data = ., family = "binomial")
 summary(m3)
-Anova(m3)
+Anova(m3, type = 3)
 
 m4 = dat.acc %>% 
   filter(Condition == "WhiteHisp") %>% 
   glmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
         data = ., family = "binomial")
 summary(m4)
-Anova(m4)
+Anova(m4, type = 3)
+
+# RT
+m2 = dat.rt %>% 
+  filter(Condition == "BlackHisp") %>% 
+  lmer(Probe.rt ~ Cue * Probe + (1|Subject), 
+        data = .)
+summary(m2)
+Anova(m2, type = 3)
+
+m3 = dat.rt %>% 
+  filter(Condition == "neutHisp") %>% 
+  lmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+        data = .)
+summary(m3)
+Anova(m3, type = 3)
+
+m4 = dat.rt %>% 
+  filter(Condition == "WhiteHisp") %>% 
+  lmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+        data = .)
+summary(m4)
+Anova(m4, type = 3)
+
+# Plotting ---
+dat.acc %>% 
+  group_by(Subject, Condition, TrialType) %>% 
+  summarize(Accuracy = mean(Probe.ACC, na.rm = T)) %>% 
+  ggplot(aes(x = TrialType, y = Accuracy)) +
+  geom_violin() +
+  geom_boxplot(width = .3, notch = T) +
+  facet_wrap(~Condition, scales = "free_x")
+
+dat.rt %>% 
+  group_by(Subject, Condition, TrialType) %>% 
+  summarize(Latency = mean(Probe.RT, na.rm = T)) %>% 
+  ggplot(aes(x = TrialType, y = Latency)) +
+  geom_violin() +
+  geom_boxplot(width = .3, notch = T) +
+  facet_wrap(~Condition, scales = "free_x")
 
 # SAS code graveyard ----
 # data dat_2; set dat;

@@ -117,10 +117,19 @@ Anova(pm3.rt, type = 3) # Again a big flip
 
 # Now the trick will be formalizing this in some sort of effect size...
 
-# This isn't grouping by Subject appropriately. Why?
+# Plotting ----
 dat.acc %>% 
   group_by(Subject, Condition, TrialType) %>% 
   summarize(Accuracy = mean(Probe.ACC, na.rm = T)) %>% 
   ggplot(aes(x = TrialType, y = Accuracy)) +
   geom_violin() +
-  facet_wrap(~Condition)
+  geom_boxplot(width = .3, notch = T) +
+  facet_wrap(~Condition, scales = "free_x")
+
+dat.rt %>% 
+  group_by(Subject, Condition, TrialType) %>% 
+  summarize(Latency = mean(Probe.RT, na.rm = T)) %>% 
+  ggplot(aes(x = TrialType, y = Latency)) +
+  geom_violin() +
+  geom_boxplot(width = .3, notch = T) +
+  facet_wrap(~Condition, scales = "free_x")
