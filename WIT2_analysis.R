@@ -27,64 +27,81 @@ dat.rt = dat %>%
 
 # 2x3 interaction where Prime == hisp
 # Accuracy
+# Note: Model currently failing to converge, gradient .004 instead of default .001
+# Switching to Nelder_Mead optimizer did not fix that, nor did increasing maxfun to 2e5.
 m1 = dat.acc %>% 
   filter(Cue == "hisp") %>% 
-  glmer(Probe.ACC ~ Condition * Probe + (1|Subject), 
-        data = ., family = "binomial")
+  glmer(Probe.ACC ~ Condition * Probe + 
+          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+        data = ., family = "binomial",
+        control = glmerControl(optimizer = "Nelder_Mead",
+                               optCtrl = list(maxfun = 20000)))
 summary(m1)
-Anova(m1, type = 3)
+Anova(m1, type = 3) # clear interaction
 
 # RT 
+# This converges nicely
 m1.rt = dat.rt %>% 
   filter(Cue == "hisp") %>% 
-  lmer(Probe.RT ~ Condition * Probe + (1|Subject), data = .)
+  lmer(Probe.RT ~ Condition * Probe + 
+         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType),
+       data = .)
 summary(m1.rt)
-Anova(m1.rt, type = 3)
+Anova(m1.rt, type = 3) # clear interaction
 
 # each 2x2 interaction within levels of condition
 # Accuracy
+# This converges but rfx of subject and subject*probe are highly correlated
 m2 = dat.acc %>% 
   filter(Condition == "BlackHisp") %>% 
-  glmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+  glmer(Probe.ACC ~ Cue * Probe + 
+          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
         data = ., family = "binomial")
 summary(m2)
-Anova(m2, type = 3)
+Anova(m2, type = 3) # Very clear interaction
 
+# Converges, everything's fine
 m3 = dat.acc %>% 
   filter(Condition == "neutHisp") %>% 
-  glmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+  glmer(Probe.ACC ~ Cue * Probe + 
+          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
         data = ., family = "binomial")
 summary(m3)
-Anova(m3, type = 3)
+Anova(m3, type = 3) # Very clear interaction
 
+# Converges, rfx somewhat correlated r = .63
 m4 = dat.acc %>% 
   filter(Condition == "WhiteHisp") %>% 
-  glmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+  glmer(Probe.ACC ~ Cue * Probe + 
+          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
         data = ., family = "binomial")
 summary(m4)
-Anova(m4, type = 3)
+Anova(m4, type = 3) # no interaction, perhaps Ps can't tell White from Hispanic.
 
 # RT
 m2 = dat.rt %>% 
   filter(Condition == "BlackHisp") %>% 
-  lmer(Probe.rt ~ Cue * Probe + (1|Subject), 
+  lmer(Probe.RT ~ Cue * Probe + 
+         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
         data = .)
 summary(m2)
-Anova(m2, type = 3)
+Anova(m2, type = 3) # solid interaction
 
 m3 = dat.rt %>% 
   filter(Condition == "neutHisp") %>% 
-  lmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+  lmer(Probe.RT ~ Cue * Probe + 
+         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
         data = .)
 summary(m3)
-Anova(m3, type = 3)
+Anova(m3, type = 3) # very solid interaction
 
 m4 = dat.rt %>% 
   filter(Condition == "WhiteHisp") %>% 
-  lmer(Probe.ACC ~ Cue * Probe + (1|Subject), 
+  lmer(Probe.RT ~ Cue * Probe + 
+         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
         data = .)
 summary(m4)
-Anova(m4, type = 3)
+Anova(m4, type = 3) # barely-there interaction
 
 # Plotting ---
 dat.acc %>% 
@@ -102,6 +119,28 @@ dat.rt %>%
   geom_violin() +
   geom_boxplot(width = .3, notch = T) +
   facet_wrap(~Condition, scales = "free_x")
+
+# Aggregation and table export
+# Should I use conditional trials (dat.acc, dat.rt) or unconditional (dat)?
+# I'll use conditional b/c that's what's actually analyzed.
+# Another question is whether to first average w/in subjects 
+# or just average across all trials directly.
+# I think it's better to average w/in subjects first.
+S2T1.acc = dat.acc %>% 
+  group_by(Condition, TrialType, Subject) %>% 
+  summarize(M.sub = mean(Probe.ACC, na.rm = T))%>% 
+  summarize(M.acc = mean(M.sub, na.rm = T),
+            SD.acc = sd(M.sub, na.rm = T))
+
+S2T1.rt = dat.rt %>% 
+  group_by(Condition, TrialType, Subject) %>% 
+  summarize(M.sub = mean(Probe.RT, na.rm = T))%>% 
+  summarize(M.rt = mean(M.sub, na.rm = T),
+            SD.rt = sd(M.sub, na.rm = T))
+
+S2T1 = full_join(S2T1.acc, S2T1.rt)
+write.table(S2T1, "S2table.txt", sep = "\t", row.names = F)
+
 
 # SAS code graveyard ----
 # data dat_2; set dat;
