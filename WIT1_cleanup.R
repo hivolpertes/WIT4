@@ -6,6 +6,7 @@
 # Input is WIT_study1_raw.txt
 # Output is WIT_study1_refined.txt
 
+library(plyr)
 library(dplyr)
 
 # data ingest

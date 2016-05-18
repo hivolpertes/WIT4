@@ -31,7 +31,8 @@ Anova(model2, type=3) # p = .081
 model3 = 
   datACC %>%
   filter(ProbeClass == "WEAP") %>%
-  glmer(Probe.ACC ~ Condition * CueClass + (1|Subject),
+  glmer(Probe.ACC ~ Condition * CueClass + 
+          (1|Subject),
         family = "binomial",
         data = .)
 Anova(model3, type=3) # null result, although seems like fairly ambiguous result
@@ -92,3 +93,5 @@ plotDatRT %>%
   ggplot(., aes(x=TrialType, y=meanRT)) +
   geom_bar(stat="identity") +
   facet_wrap(~Condition)
+
+

@@ -48,43 +48,106 @@ dat.acc = dat %>%
 
 # Accuracy analyses ----
 # Does accuracy depend on 3-way interaction?
-mAcc = glmer(Probe.ACC ~ Condition * CueClass * Probe + (1 + CueClass * Probe|Subject) + 
-               (1|ProbeType) + (1|CueType),
+mAcc = glmer(Probe.ACC ~ Condition * CueClass * Probe + 
+               (1 + CueClass * Probe|Subject) + (1|ProbeType) + (1|CueType),
              data = dat.acc, family = "binomial",
              contrasts = list(Condition = contr.sum,
                               CueClass = contr.sum,
                               Probe = contr.sum))
-summary(mAcc)
+summary(mAcc) 
+ranef(mAcc)
+# No, it does not. But note that this fails to converge max|grad| = .003 vs tol = .001
 
-# Let's visualize the means
-meanACC = dat.acc %>% 
-  group_by(Condition, TrialClass) %>% 
-  summarize(accuracy = mean(Probe.ACC, na.rm = T))
-meanACC
-ggplot(meanACC, aes(x = TrialClass, y = accuracy)) +
-  geom_point() +
-  facet_wrap(~Condition) +
-  scale_y_continuous(limits = c(.6, .9))
+# 2x2 ANOVAs ----
+# Model with random interactions would not converge, negative eigenvalues
+# That's probably the fault of the considerable random effects of CueType.
+mAcc.GunNeu = dat.acc %>% 
+  filter(Condition == "GunNeu") %>% 
+  glmer(Probe.ACC ~ CueClass * Probe + 
+          (1 + CueClass + Probe|Subject) + (1|ProbeType) + (1|CueType), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(mAcc.GunNeu) # Highly significant, p < .001
 
-# Okay, so hypothesis is that you find the same 
-# (White-other - White-Gun) difference whether that "other" is
-# tools or miscellaneous goofy objects
-# This comes out great until you start adding random slopes or intercepts of Probe.
-mAcc.GunNeu = dat %>% 
+mAcc.GunTool = dat.acc %>% 
+  filter(Condition == "GunTool") %>% 
+  glmer(Probe.ACC ~ CueClass * Probe + 
+          (1 + CueClass * Probe|Subject) + (1|ProbeType) + (1|CueType), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(mAcc.GunTool) # p = .009, although |max|grad| a bit above threshold (.0013)
+# Note problematic correlation between Cue×Probe slope and Probe slope
+
+# Pairwise contrasts for white stimuli ----
+# Gun - other condition
+# Without random subject-slopes and item-intercepts
+GunNeu.white.acc = dat.acc %>% 
   filter(Condition == "GunNeu", CueClass == "white") %>% 
-  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType), 
+  glmer(Probe.ACC ~ Probe + (1|Subject), 
         data = .,
         family = "binomial",
         contrasts = list(Probe = contr.sum))
-summary(mAcc.GunNeu) # Highly significant
+summary(GunNeu.white.acc) # Highly significant, p = .001
 
-mAcc.GunTool = dat %>% 
-  filter(Condition == "GunTool", CueClass == "white") %>% 
-  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType), 
+# With random subject-slopes and item-intercepts
+# Once you add random intercepts of stimulus though it dissolves. Why's that?
+GunNeu.white.acc.ranef = dat.acc %>% 
+  filter(Condition == "GunNeu", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1+ Probe|Subject) + (1|ProbeType) + (1|CueType), 
         data = .,
         family = "binomial",
         contrasts = list(Probe = contr.sum))
-summary(mAcc.GunTool) # Just significant, p = .039 if no random slope of Probe, n.s. with random slope of probe
+summary(GunNeu.white.acc.ranef) # p = .354
+# Let's pick apart the random effects
+rfx = ranef(GunNeu.white.acc.ranef) # save to object
+# inspect distribution of Probe-effect across subjects
+probe.fx = rfx$Subject$ProbeWeapon + fixef(GunNeu.white.acc.ranef)["Probe1"]
+hist(probe.fx) 
+t.test(probe.fx) # well, this is significant, so why isn't the summary() output?
+# inspect distribution of random intercepts of probeType
+rfx$ProbeType %>% 
+  mutate(., Item = row.names(.),
+         Group = rep(c("Misc", "Gun"), each = 4)) %>%
+  ggplot(aes(x = Item, y = `(Intercept)`, fill = Group)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+# The grip-strength tester is very different!
+
+# Pairwise contrast, white primes, classic gun/tool WIT
+# Without random subject-slopes and item intercepts
+GunTool.white.acc = dat.acc %>% 
+  filter(Condition == "GunTool", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1|Subject), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(GunTool.white.acc) # not significant, p = .138
+
+# Wit random subject-slopes and item intercepts
+GunTool.white.acc.ranef = dat.acc %>% 
+  filter(Condition == "GunTool", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType) + (1|CueType), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(GunTool.white.acc.ranef) # Not significant, p = .634
+ranef(GunTool.white.acc.ranef) # Why are random effects of CueType all exactly zero?
+# Debug attempt
+dat.acc %>% 
+  filter(Condition == "GunTool", CueClass == "white") %>% 
+  select(Probe, ProbeType, CueType) %>% 
+  distinct() %>% 
+  arrange(ProbeType, CueType) # It looks like it's all there. Hmmm.
+# Plot these random effects too
+rfx2 = ranef(GunTool.white.acc.ranef)
+rfx2$ProbeType %>% 
+  mutate(., Item = row.names(.),
+         Group = rep(c("Tool", "Gun"), each = 4)) %>%
+  ggplot(aes(x = Item, y = `(Intercept)`, fill = Group)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
 
 # Bayes -- how much evidence do I have against 3-way interaction?
 # Well, BayesFactor doesn't do binomial outcomes yet, does it now?
@@ -145,3 +208,41 @@ dat.rt %>%
   geom_violin() +
   geom_boxplot(width = .2, notch = T) +
   ggtitle("Violin & box plots of cell mean RT per subject")
+
+# Table export ----
+# Aggregation and table export
+# Should I use conditional trials (dat.acc, dat.rt) or unconditional (dat)?
+# I'll use conditional b/c that's what's actually analyzed.
+# Another question is whether to first average w/in subjects 
+# or just average across all trials directly.
+# I think it's better to average w/in subjects first.
+S4T1.acc = dat.acc %>% 
+  group_by(Condition, TrialType, Subject) %>% 
+  summarize(M.sub = mean(Probe.ACC, na.rm = T))%>% 
+  summarize(M.acc = mean(M.sub, na.rm = T),
+            SD.acc = sd(M.sub, na.rm = T))
+
+S4T1.rt = dat.rt %>% 
+  group_by(Condition, TrialType, Subject) %>% 
+  summarize(M.sub = mean(Probe.RT, na.rm = T))%>% 
+  summarize(M.rt = mean(M.sub, na.rm = T),
+            SD.rt = sd(M.sub, na.rm = T))
+
+S4T1 = full_join(S4T1.acc, S4T1.rt)
+write.table(S4T1, "S1table.txt", sep = "\t", row.names = F)
+
+# This was stupid ----
+# inspect distribution of random intercepts
+rfx$Subject %>% 
+  mutate(., Subject = row.names(.)) %>%
+  arrange(`(Intercept)`) %>% 
+  mutate(index = 1:nrow(.)) %>% 
+  ggplot(aes(x = index, y = `(Intercept)`)) +
+  geom_bar(stat = "identity")
+# inspect distribution of random slopes of probe
+rfx$Subject %>% 
+  mutate(., Subject = row.names(.)) %>%
+  arrange(ProbeWeapon) %>% 
+  mutate(index = 1:nrow(.)) %>% 
+  ggplot(aes(x = index, y = ProbeWeapon)) +
+  geom_bar(stat = "identity")

@@ -10,8 +10,8 @@
 # It also deletes participants with
 # accuracy not sig. above chance
 
-# Input is Scherer_2013_raw.txt
-# Output is WIT_study2_refined.txt
+library(plyr)
+library(dplyr)
 
 dat = read.delim(file="./rawdata/WIT_study2_raw.txt", sep="\t")
 
