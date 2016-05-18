@@ -117,6 +117,49 @@ Anova(pm3.rt, type = 3) # Again a big flip
 
 # Now the trick will be formalizing this in some sort of effect size...
 
+# Summary tables
+sumTab1 = dat.acc %>% 
+  group_by(Condition, Probe, Cue) %>% 
+  summarise("M_acc" = mean(Probe.ACC, na.rm = T),
+            "SD_acc" = sd(Probe.ACC, na.rm = T),
+            "M_rt" = mean(Probe.RT, na.rm = T),
+            "SD_rt" = sd(Probe.RT, na.rm = T))
+
+# Export statistical output
+dir.create("results")
+sink("./results/WIT1_model_output.txt")
+cat("Accuracy, overall thingie\n")
+Anova(m1, type = 3)
+cat("Accuracy, 2x2s\n")
+cat("Black-White task\n")
+Anova(m2, type = 3)
+cat("Black-Neutral task\n")
+Anova(m3, type = 3)
+cat("Neutral-White task\n")
+Anova(m4, type = 3)
+cat("Accuracy, analyses by Prime\n")
+cat("Black Primes\n")
+Anova(pm1, type = 3)
+cat("White Primes\n")
+Anova(pm2, type = 3)
+cat("Neutral Primes\n")
+Anova(pm3, type = 3)
+# cat("RT, 2x2s")
+# cat("Black-White task")
+# Anova(m2.rt, type = 3)
+# cat("Black-Neutral task")
+# Anova(m3.rt, type = 3)
+# cat("Neutral-White task")
+# Anova(m4.rt, type = 3)
+cat("RT, analyses by Prime\n")
+cat("Black Primes\n")
+Anova(pm1.rt, type = 3)
+cat("White Primes\n")
+Anova(pm2.rt, type = 3)
+cat("Neutral Primes\n")
+Anova(pm3.rt, type = 3)
+sink()
+
 # Plotting ----
 dat.acc %>% 
   group_by(Subject, Condition, TrialType) %>% 
