@@ -20,6 +20,7 @@ dat = dat %>%
 
 # TODO: Think carefully about these and double-check
 # Original SAS script had "neutral_white White" and "neutral_white Neutral" flipped
+# this is only for the 3 × 2 × 2, which I think is a bad idea anyway
 gunPrimes = c("black_white Black", "neutral_black Black", "neutral_white White")
 toolPrimes = c("black_white White", "neutral_black Neutral", "neutral_white Neutral")
 
@@ -47,22 +48,28 @@ Anova(m1, type = 3)
 # These models converge
 m2 = dat.acc %>% 
   filter(Condition == "black_white") %>% 
-  glmer(Probe.ACC ~ Cue * Probe + (1|Subject),
-           data = ., family = "binomial")
+  glmer(Probe.ACC ~ Cue * Probe + (1 + Cue * Probe|Subject),
+           data = ., family = "binomial",
+        contrasts = list(Cue = "contr.sum",
+                         Probe = "contr.sum"))
 summary(m2)
-Anova(m2, type = 3)
+Anova(m2, type = 3) 
 
 m3 = dat.acc %>% 
   filter(Condition == "neutral_black") %>% 
   glmer(Probe.ACC ~ Cue * Probe + (1|Subject),
-        data = ., family = "binomial")
+        data = ., family = "binomial",
+        contrasts = list(Cue = "contr.sum",
+                         Probe = "contr.sum"))
 summary(m3)
 Anova(m3, type = 3)
 
 m4 = dat.acc %>% 
   filter(Condition == "neutral_white") %>% 
   glmer(Probe.ACC ~ Cue * Probe + (1|Subject),
-        data = ., family = "binomial")
+        data = ., family = "binomial",
+        contrasts = list(Cue = "contr.sum",
+                         Probe = "contr.sum"))
 summary(m4)
 Anova(m4, type = 3)
 
@@ -76,7 +83,8 @@ pm1 = dat.acc %>%
   filter(Cue == "Black") %>% 
   glmer(Probe.ACC ~ Condition * Probe + 
           (1 + Probe|Subject),
-        data = ., family = "binomial")
+        data = ., family = "binomial",
+        contrasts = list(Probe = "contr.sum"))
 summary(pm1)
 Anova(pm1, type = 3) # Not significant, Blacks always prime Gun
 
@@ -84,7 +92,8 @@ pm2 = dat.acc %>%
   filter(Cue == "White") %>% 
   glmer(Probe.ACC ~ Condition * Probe + 
           (1 + Probe|Subject),
-        data = ., family = "binomial")
+        data = ., family = "binomial",
+        contrasts = list(Probe = "contr.sum"))
 summary(pm2)
 Anova(pm2, type = 3) # Note the big flip, Whites go from priming Gun to Tool
 
@@ -92,7 +101,8 @@ pm3 = dat.acc %>%
   filter(Cue == "Neutral") %>% 
   glmer(Probe.ACC ~ Condition * Probe + 
           (1 + Probe|Subject),
-        data = ., family = "binomial")
+        data = ., family = "binomial",
+        contrasts = list(Probe = "contr.sum"))
 summary(pm3)
 Anova(pm3, type = 3) 
 # Again a big flip, Neutrals prime Tools moreso in neutral-black than neutral-white
@@ -105,7 +115,8 @@ pm1.rt = dat.rt %>%
   filter(Cue == "Black") %>% 
   lmer(Probe.RT ~ Condition * Probe + 
          (1 + Probe|Subject),
-       data = .)
+       data = .,
+       contrasts = list(Probe = "contr.sum"))
 summary(pm1.rt)
 Anova(pm1.rt, type = 3)
 # Slight tendency for stronger black-gun priming in neutral-black vs white-black
@@ -114,7 +125,8 @@ pm2.rt = dat.rt %>%
   filter(Cue == "White") %>% 
   lmer(Probe.RT ~ Condition * Probe + 
          (1 + Probe|Subject),
-        data = .)
+        data = .,
+       contrasts = list(Probe = "contr.sum"))
 summary(pm2.rt)
 Anova(pm2.rt, type = 3) # Note the big flip from black-white to neutral-white
 
@@ -122,7 +134,8 @@ pm3.rt = dat.rt %>%
   filter(Cue == "Neutral") %>% 
   lmer(Probe.RT ~ Condition * Probe + 
          (1 + Probe|Subject),
-        data = .)
+        data = .,
+       contrasts = list(Probe = "contr.sum"))
 summary(pm3.rt)
 Anova(pm3.rt, type = 3) # Not significant, small change
 

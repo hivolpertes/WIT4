@@ -60,20 +60,22 @@ ranef(mAcc)
 
 # 2x2 ANOVAs ----
 # Model with random interactions would not converge, negative eigenvalues
-# That's probably the fault of the considerable random effects of CueType.
+# Random effect of CueClass perfectly correlated w/ Cue×Probe interaction
 mAcc.GunNeu = dat.acc %>% 
   filter(Condition == "GunNeu") %>% 
   glmer(Probe.ACC ~ CueClass * Probe + 
-          (1 + CueClass + Probe|Subject) + (1|ProbeType) + (1|CueType), 
+          (1 + CueClass + Probe|Subject), 
         data = .,
         family = "binomial",
-        contrasts = list(Probe = contr.sum))
+        contrasts = list(Probe = "contr.sum"))
 summary(mAcc.GunNeu) # Highly significant, p < .001
+Anova(mAcc.GunNeu, type = 3)
 
+# Very high correlation btwn interaction and main effect again worrisome, omitted
 mAcc.GunTool = dat.acc %>% 
   filter(Condition == "GunTool") %>% 
   glmer(Probe.ACC ~ CueClass * Probe + 
-          (1 + CueClass * Probe|Subject) + (1|ProbeType) + (1|CueType), 
+          (1 + CueClass + Probe|Subject), 
         data = .,
         family = "binomial",
         contrasts = list(Probe = contr.sum))
@@ -90,6 +92,15 @@ GunNeu.white.acc = dat.acc %>%
         family = "binomial",
         contrasts = list(Probe = contr.sum))
 summary(GunNeu.white.acc) # Highly significant, p = .001
+
+# With random subject-slopes but no item-intercepts
+GunNeu.white.acc.r = dat.acc %>% 
+  filter(Condition == "GunNeu", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1+ Probe|Subject), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(GunNeu.white.acc.r) # p = .046
 
 # With random subject-slopes and item-intercepts
 # Once you add random intercepts of stimulus though it dissolves. Why's that?
@@ -125,7 +136,16 @@ GunTool.white.acc = dat.acc %>%
         contrasts = list(Probe = contr.sum))
 summary(GunTool.white.acc) # not significant, p = .138
 
-# Wit random subject-slopes and item intercepts
+# with random subject-slopes
+GunTool.white.acc.r = dat.acc %>% 
+  filter(Condition == "GunTool", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = "contr.sum"))
+summary(GunTool.white.acc.r) # not significant, p = .371
+
+# With random subject-slopes and item intercepts
 GunTool.white.acc.ranef = dat.acc %>% 
   filter(Condition == "GunTool", CueClass == "white") %>% 
   glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType) + (1|CueType), 
@@ -153,18 +173,25 @@ rfx2$ProbeType %>%
 # Well, BayesFactor doesn't do binomial outcomes yet, does it now?
 
 # RT analyses ----
-mRT = lmer(Probe.RT ~ Condition * CueClass * Probe + (1|Subject),
+# Worried about these extremely high correlations among effects
+mRT = lmer(Probe.RT ~ Condition * CueClass * Probe + 
+             (1 + CueClass * Probe|Subject),
             data = dat.rt,
            contrasts = list(Condition = contr.sum,
                             CueClass = contr.sum,
                             Probe = contr.sum))
 summary(mRT)
-Anova(mRT, type = 3) # uh, okay, so everything is wildly significant?
+Anova(mRT, type = 3) # significant 2x2 but not 2x2x2, p < .001
 
-mRT2 = lmer(log(Probe.RT) ~ Condition * CueClass * Probe + (1|Subject),
-           data = dat.rt)
+# Singular RFX matrix if including interaction
+mRT2 = lmer(log(Probe.RT) ~ Condition * CueClass * Probe + 
+              (1 + CueClass + Probe|Subject),
+            data = dat.rt,
+            contrasts = list(Condition = contr.sum,
+                             CueClass = contr.sum,
+                             Probe = contr.sum))
 summary(mRT2)
-Anova(mRT2, type = 3)
+Anova(mRT2, type = 3) # sign. 2x2 but not 2x2x2
 
 meanRT = dat.rt %>% 
   group_by(Condition, TrialClass) %>% 

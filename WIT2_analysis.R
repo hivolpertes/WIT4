@@ -32,8 +32,10 @@ dat.rt = dat %>%
 m1 = dat.acc %>% 
   filter(Cue == "hisp") %>% 
   glmer(Probe.ACC ~ Condition * Probe + 
-          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+          (1 + Probe|Subject), 
         data = ., family = "binomial",
+        contrasts = list(Condition = "contr.sum",
+                         Probe = "contr.sum"),
         control = glmerControl(optimizer = "Nelder_Mead",
                                optCtrl = list(maxfun = 20000)))
 summary(m1)
@@ -44,7 +46,9 @@ Anova(m1, type = 3) # clear interaction
 m1.rt = dat.rt %>% 
   filter(Cue == "hisp") %>% 
   lmer(Probe.RT ~ Condition * Probe + 
-         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType),
+         (1 + Probe|Subject),
+       contrasts = list(Condition = "contr.sum",
+                        Probe = "contr.sum"),
        data = .)
 summary(m1.rt)
 Anova(m1.rt, type = 3) # clear interaction
@@ -55,7 +59,8 @@ Anova(m1.rt, type = 3) # clear interaction
 m2 = dat.acc %>% 
   filter(Condition == "BlackHisp") %>% 
   glmer(Probe.ACC ~ Cue * Probe + 
-          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+          (1 + Probe|Subject), 
+        contrasts = list(Probe = "contr.sum"),
         data = ., family = "binomial")
 summary(m2)
 Anova(m2, type = 3) # Very clear interaction
@@ -64,7 +69,8 @@ Anova(m2, type = 3) # Very clear interaction
 m3 = dat.acc %>% 
   filter(Condition == "neutHisp") %>% 
   glmer(Probe.ACC ~ Cue * Probe + 
-          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+          (1 + Probe|Subject), 
+        contrasts = list(Probe = "contr.sum"),
         data = ., family = "binomial")
 summary(m3)
 Anova(m3, type = 3) # Very clear interaction
@@ -73,7 +79,8 @@ Anova(m3, type = 3) # Very clear interaction
 m4 = dat.acc %>% 
   filter(Condition == "WhiteHisp") %>% 
   glmer(Probe.ACC ~ Cue * Probe + 
-          (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+          (1 + Probe|Subject),
+        contrasts = list(Probe = "contr.sum"),
         data = ., family = "binomial")
 summary(m4)
 Anova(m4, type = 3) # no interaction, perhaps Ps can't tell White from Hispanic.
@@ -82,7 +89,8 @@ Anova(m4, type = 3) # no interaction, perhaps Ps can't tell White from Hispanic.
 m2 = dat.rt %>% 
   filter(Condition == "BlackHisp") %>% 
   lmer(Probe.RT ~ Cue * Probe + 
-         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+         (1 + Probe|Subject),
+       contrasts = list(Probe = "contr.sum"),
         data = .)
 summary(m2)
 Anova(m2, type = 3) # solid interaction
@@ -90,7 +98,8 @@ Anova(m2, type = 3) # solid interaction
 m3 = dat.rt %>% 
   filter(Condition == "neutHisp") %>% 
   lmer(Probe.RT ~ Cue * Probe + 
-         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+         (1 + Probe|Subject),
+       contrasts = list(Probe = "contr.sum"),
         data = .)
 summary(m3)
 Anova(m3, type = 3) # very solid interaction
@@ -98,10 +107,11 @@ Anova(m3, type = 3) # very solid interaction
 m4 = dat.rt %>% 
   filter(Condition == "WhiteHisp") %>% 
   lmer(Probe.RT ~ Cue * Probe + 
-         (1 + Probe|Subject) + (1|CueType) + (1|ProbeType), 
+         (1 + Probe|Subject), 
+       contrasts = list(Probe = "contr.sum"),
         data = .)
 summary(m4)
-Anova(m4, type = 3) # barely-there interaction
+Anova(m4, type = 3) # not-quite-there interaction
 
 # Plotting ---
 dat.acc %>% 
