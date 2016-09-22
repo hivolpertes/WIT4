@@ -1,5 +1,7 @@
-setwd(choose.dir())
-dat = read.delim(file="WIT_study2_SASdat.txt")
+library(plyr)
+library(dplyr)
+
+dat <- read.delim(file="clean_wit2.txt")
 
 # let's define Automatic in terms of bias towards gun
 # e.g. A=1 means always automatic priming of gun by prime

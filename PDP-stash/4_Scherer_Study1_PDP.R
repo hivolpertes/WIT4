@@ -1,6 +1,7 @@
+library(plyr)
+library(dplyr)
 
-setwd("C:/data_2014/Scherer_data_post/Study1")
-dat = read.delim(file="WIT_study1_SASdat.txt")
+dat <- read.delim(file="clean_wit1.txt")
 
 # let's define Automatic in terms of bias towards gun
 # e.g. A=1 means always automatic priming of gun by prime
@@ -12,12 +13,18 @@ subBlackWhite = unique(dat$sub[dat$ExperimentName == "WIT_black_white"])
 subNeutBlack = unique(dat$sub[dat$ExperimentName == "WIT_neutral_black"])
 subNeutWhite = unique(dat$sub[dat$ExperimentName == "WIT_neutral_white"])
 
+sumStats <- dat %>% 
+  group_by(Subject, ExperimentName, Cue, Probe) %>% 
+  summarise(Accuracy = mean(Probe.ACC))
+
+# Black-Gun and White-Tool are "congruent" for BlackWhite condition
+#sumStats$congruency[] 
 
 # from Stewart & Payne, 2008:
 # C = P(correct | congruent) - P(stereotypic error | incongruent)
 # A = P(stereotypic error | incongruent) / (1-C)
-C = dat$acc[dat$Probe == "Gun"] - (1 - dat$acc[dat$Probe == "Tool"])
-A = (1 - dat$acc[dat$Probe == "Tool"]) / (1 - C)
+C <- sumStats$Probe.ACC[dat$Probe == "Gun"] - (1 - sumStats$Probe.ACC[dat$Probe == "Tool"])
+A <- (1 - dat$Probe.ACC[dat$Probe == "Tool"]) / (1 - C)
 head(dat[dat$Probe == "Gun",])
 head(dat[dat$Probe == "Tool",])
 
