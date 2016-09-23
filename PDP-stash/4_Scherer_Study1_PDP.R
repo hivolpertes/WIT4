@@ -4,7 +4,10 @@ library(tidyr)
 library(ggplot2)
 library(lme4)
 library(car)
+# How to get effect sizes?
 library(compute.es)
+# library(afex)
+# library(ez)
 
 dat <- read.delim(file="clean_wit1.txt")
 
@@ -67,25 +70,34 @@ datPDP <- full_join(sumStats2, auto) %>%
 # save
 write.table(datPDP, file="WIT_study1_PDP.txt", sep="\t", row.names=F)
 
+# Check cell N for effect size calculation
+datPDP %>% 
+  select(Subject, Condition) %>% 
+  distinct() %>% 
+  group_by(Condition) %>% 
+  summarize(n = n())
 
-# the general model fails to converge probably due to
-# insufficient degrees of freedom / missing cells
-# it's a pain but I'll need to run more specific contrasts...
-
+# Run models ----
 BlackA = lm(A ~ Condition, data = datPDP, subset = Cue == "Black")
 BlackC = lm(C ~ Condition, data = datPDP, subset = Cue == "Black")
 summary(BlackA)
+tes(summary(BlackA)$coefficients[2, 3], 26, 28)
 summary(BlackC)
+tes(summary(BlackC)$coefficients[2, 3], 26, 28)
 
 WhiteA = lm(A ~ Condition, data = datPDP, subset = Cue == "White")
 WhiteC = lm(C ~ Condition, data = datPDP, subset = Cue == "White")
 summary(WhiteA)
+tes(summary(WhiteA)$coefficients[2,3], 26, 27)
 summary(WhiteC)
+tes(summary(WhiteC)$coefficients[2,3], 26, 27)
 
 NeutralA = lm(A ~ Condition, dat=datPDP, subset = Cue == "Neutral")
 NeutralC = lm(C ~ Condition, dat=datPDP, subset = Cue == "Neutral")
 summary(NeutralA)
+tes(summary(NeutralA)$coefficients[2,3], 28, 27)
 summary(NeutralC)
+tes(summary(NeutralC)$coefficients[2,3], 28, 27)
 
 # graphics ----
 # these histograms would seem to indicate that

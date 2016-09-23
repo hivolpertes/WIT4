@@ -1,64 +1,135 @@
 library(plyr)
 library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lme4)
+library(car)
+# How to get effect sizes?
+library(compute.es)
+# library(afex)
+# library(ez)
 
-dat <- read.delim(file="clean_wit2.txt")
+dat <- read.delim(file="clean_wit2.txt") %>% 
+  mutate(Probe = ifelse(grepl("Gun", TrialType), "Gun", "Tool"),
+         Cue = ifelse(grepl("Black", TrialType), "Black",
+                      ifelse(grepl("Hisp", TrialType), "Hisp",
+                             ifelse(grepl("Neut", TrialType), "Neut",
+                                          "White"))))
 
 # let's define Automatic in terms of bias towards gun
 # e.g. A=1 means always automatic priming of gun by prime
 # whereas A=0 means always automatic priming of tool by prime
+# I did the algebra and you get the same C parameter and A1 = 1-A2 so its all good
+
+# Thus, we're not conditioning on experiment, just 
 
 # calculate A for White, Black, Object primes w/in each condition
+sumStats <- dat %>% 
+  group_by(Subject, Condition, Cue, Probe) %>% 
+  summarise(Accuracy = mean(Probe.ACC)) %>% 
+  ungroup()
 
-# from Stewart & Payne, 2008:
+# from Stewart & Payne, 2008, p1338:
 # C = P(correct | congruent) - P(stereotypic error | incongruent)
 # A = P(stereotypic error | incongruent) / (1-C)
-subBlackHisp = unique(dat$sub[dat$Condition == "BlackHisp"])
-subNeutHisp = unique(dat$sub[dat$Condition == "neutHisp"])
-subWhiteHisp = unique(dat$sub[dat$Condition == "WhiteHisp"])
 
-datPDP = dat[(1:nrow(dat) %% 2 == 1),]
-C = dat$acc[dat$ProbeType == "weapon"] + dat$acc[dat$ProbeType == "tool"] - 1
-A = (1 - dat$acc[dat$Probe == "tool"]) / (1 - C)
-head(dat[dat$Probe == "weapon",])
-head(dat[dat$Probe == "tool",])
+# C is constant given A or (1-A)
+# So flipping A to be 1-A does not change C.
 
-datPDP$C = C
-datPDP$A = A
+# I will calculate
+# C1 = P(Correct|Gun, Cue1) - P(Incorrect|Tool, Cue1)
+# C2 = P(Correct|Gun, Cue2) - P(Incorrect|Tool, Cue2)
+# A1 = P(Gun-response|Tool, Cue1) / (1 - C1)
+# A2 = P(Gun-response|Tool, Cue2) / (1 - C2)
 
-# export for SAS
-write.table(datPDP, file="datPDP2.txt", sep="\t", row.names=F)
+# Calculate "Control"
+control <- sumStats %>% 
+  # Average across cues
+  #group_by(ExperimentName, Subject, Probe) %>% 
+  #summarize(Accuracy = mean(Accuracy)) %>%  
+  # Make difference of Gun-Accuracy and Tool-Error
+  spread(key = Probe, value = Accuracy) %>% 
+  mutate(C = Gun - (1 - Tool)) %>% 
+  select(-Gun, -Tool)
 
-require(ggplot2)
+# Bind to original sumStats frame
+sumStats2 <- full_join(sumStats, control)
+
+# Calculate "Auto"
+auto <- sumStats2 %>% 
+  spread(key = Probe, value = Accuracy) %>% 
+  # Auto = (Tool-trial errors) / (1 - C)
+  mutate(A = (1 - Tool)/(1 - C)) %>% 
+  select(-Gun, -Tool)
+
+# Bind to data frame
+datPDP <- full_join(sumStats2, auto) %>% 
+  # Drop redundant columns / rows
+  select(-Accuracy, -Probe) %>% 
+  distinct()
+
+# save
+write.table(datPDP, file="WIT_study2_PDP.txt", sep="\t", row.names=F)
+
+# Check cell N for effect size calculation
+datPDP %>% 
+  select(Subject, Condition) %>% 
+  distinct() %>% 
+  group_by(Condition) %>% 
+  summarize(n = n())
+
+# Run models ----
+hispanicA <- lm(A ~ Condition, data = datPDP, subset = Cue == "Hisp")
+hispanicC <- lm(C ~ Condition, data = datPDP, subset = Cue == "Hisp")
+summary(hispanicA)
+tes(summary(hispanicA)$coefficients[2, 3], 20, 25)
+tes(summary(hispanicA)$coefficients[3, 3], 20, 27)
+summary(hispanicC)
+tes(summary(hispanicC)$coefficients[2, 3], 20, 25)
+tes(summary(hispanicC)$coefficients[3, 3], 20, 27)
+
+# graphics ----
 # these histograms would seem to indicate that
 # C is holding mostly constant while
 # A is shifting fairly dramatically
-ggplot(datPDP, aes(x=C)) +
+# Plots of C
+datPDP %>% 
+  filter(Cue == "Hisp") %>% 
+  ggplot(aes(x=C)) +
   geom_histogram(binwidth=.1) +
-  facet_wrap(~CueType*Condition, nrow=3)
+  facet_grid(Condition~.)
 
-ggplot(datPDP, aes(x=A)) +
+datPDP %>% 
+  filter(Cue == "Hisp") %>% 
+  ggplot(aes(x = Condition, y = C)) +
+  geom_violin() +
+  geom_point() +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
+
+datPDP %>% 
+  filter(Cue == "Hisp") %>% 
+  ggplot(aes(x = Condition, y = C)) +
+  geom_violin() +
+  geom_boxplot(width = .5, notch = T) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
+
+# Plots of A
+datPDP %>% 
+  filter(Cue == "Hisp") %>% 
+  ggplot(aes(x=A)) +
   geom_histogram(binwidth=.1) +
-  facet_wrap(~CueType*Condition, nrow=3)
+  facet_grid(Condition~.)
 
-require(lme4); require(car)
-# the general model fails to converge probably due to
-# insufficient degrees of freedom / missing cells
-# it's a pain but I'll need to run more specific contrasts...
-datPDPHispanic = datPDP[datPDP$CueType == "hispanic",]
-datPDPHispanic$sub = as.factor(datPDPHispanic$sub)
+datPDP %>% 
+  filter(Cue == "Hisp") %>% 
+  ggplot(aes(x = Condition, y = A)) +
+  geom_violin() +
+  geom_point() +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
 
-
-report = function(model) {print(summary(model)); print(Anova(model, type=3))}
-
-#yes! take it to the blue line
-HispanicA1 = lm(A ~ Condition, dat=datPDPHispanic)
-HispanicC1 = lm(C ~ Condition, dat=datPDPHispanic)
-report(HispanicA1)
-report(HispanicC1)
-
-ggplot(datPDP, aes(x=Condition, y=A)) +
-  geom_boxplot(notch=T)
-ggplot(datPDP, aes(x=Condition, y=C)) +
-  geom_boxplot(notch=T)
-
-# we'll return to this later for parameter estimates & plots.
+datPDP %>% 
+  filter(Cue == "Hisp") %>% 
+  ggplot(aes(x = Condition, y = A)) +
+  geom_violin() +
+  geom_boxplot(width = .35, notch = T) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
