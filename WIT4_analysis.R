@@ -61,6 +61,7 @@ ranef(mAcc)
 # 2x2 ANOVAs ----
 # Model with random interactions would not converge, negative eigenvalues
 # Random effect of CueClass perfectly correlated w/ Cue×Probe interaction
+# Therefore this only models additive random slopes
 mAcc.GunNeu = dat.acc %>% 
   filter(Condition == "GunNeu") %>% 
   glmer(Probe.ACC ~ CueClass * Probe + 
@@ -72,6 +73,7 @@ summary(mAcc.GunNeu) # Highly significant, p < .001
 Anova(mAcc.GunNeu, type = 3)
 
 # Very high correlation btwn interaction and main effect again worrisome, omitted
+# This models only additive random slopes
 mAcc.GunTool = dat.acc %>% 
   filter(Condition == "GunTool") %>% 
   glmer(Probe.ACC ~ CueClass * Probe + 
@@ -83,7 +85,8 @@ summary(mAcc.GunTool) # p = .009, although |max|grad| a bit above threshold (.00
 # Note problematic correlation between Cue×Probe slope and Probe slope
 
 # Pairwise contrasts for white stimuli ----
-# Gun - other condition
+# Gun - NotGun condition
+# Here I run the same analysis several times with different random terms
 # Without random subject-slopes and item-intercepts
 GunNeu.white.acc = dat.acc %>% 
   filter(Condition == "GunNeu", CueClass == "white") %>% 
