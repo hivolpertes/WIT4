@@ -99,6 +99,12 @@ tes(summary(NeutralA)$coefficients[2,3], 28, 27)
 summary(NeutralC)
 tes(summary(NeutralC)$coefficients[2,3], 28, 27)
 
+# Exploring new one-sample t-test idea ----
+dat.whiteA1 <- with(datPDP, A[Cue == "White" & Condition == "BW"])
+dat.whiteA2 <- with(datPDP, A[Cue == "White" & Condition == "WN"])
+t.test(dat.whiteA1, mu = 0.5) # significant not-gun A parameter
+t.test(dat.whiteA2, mu = 0.5) # significant gun A parameter
+
 # graphics ----
 # these histograms would seem to indicate that
 # C is holding mostly constant while
