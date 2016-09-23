@@ -1,86 +1,126 @@
 library(plyr)
 library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lme4)
+library(car)
+library(compute.es)
 
 dat <- read.delim(file="clean_wit1.txt")
 
 # let's define Automatic in terms of bias towards gun
 # e.g. A=1 means always automatic priming of gun by prime
 # whereas A=0 means always automatic priming of tool by prime
+# I did the algebra and you get the same C parameter and A1 = 1-A2 so its all good
+
+# Thus, we're not conditioning on experiment, just 
 
 # calculate A for White, Black, Object primes w/in each condition
-
-subBlackWhite = unique(dat$sub[dat$ExperimentName == "WIT_black_white"])
-subNeutBlack = unique(dat$sub[dat$ExperimentName == "WIT_neutral_black"])
-subNeutWhite = unique(dat$sub[dat$ExperimentName == "WIT_neutral_white"])
-
 sumStats <- dat %>% 
   group_by(Subject, ExperimentName, Cue, Probe) %>% 
-  summarise(Accuracy = mean(Probe.ACC))
+  summarise(Accuracy = mean(Probe.ACC)) %>% 
+  ungroup()
 
-# Black-Gun and White-Tool are "congruent" for BlackWhite condition
-#sumStats$congruency[] 
-
-# from Stewart & Payne, 2008:
+# from Stewart & Payne, 2008, p1338:
 # C = P(correct | congruent) - P(stereotypic error | incongruent)
 # A = P(stereotypic error | incongruent) / (1-C)
-C <- sumStats$Probe.ACC[dat$Probe == "Gun"] - (1 - sumStats$Probe.ACC[dat$Probe == "Tool"])
-A <- (1 - dat$Probe.ACC[dat$Probe == "Tool"]) / (1 - C)
-head(dat[dat$Probe == "Gun",])
-head(dat[dat$Probe == "Tool",])
 
-# make table w/ just PDP estimates
-datPDP = dat[(1:nrow(dat) %% 2 == 1), 1:5]
-datPDP$C = C
-datPDP$A = A
-#View(datPDP)
+# C is constant given A or (1-A)
+# So flipping A to be 1-A does not change C.
+
+# I will calculate
+# C1 = P(Correct|Gun, Cue1) - P(Incorrect|Tool, Cue1)
+# C2 = P(Correct|Gun, Cue2) - P(Incorrect|Tool, Cue2)
+# A1 = P(Gun-response|Tool, Cue1) / (1 - C1)
+# A2 = P(Gun-response|Tool, Cue2) / (1 - C2)
+
+# Calculate "Control"
+control <- sumStats %>% 
+  # Average across cues
+  #group_by(ExperimentName, Subject, Probe) %>% 
+  #summarize(Accuracy = mean(Accuracy)) %>%  
+  # Make difference of Gun-Accuracy and Tool-Error
+  spread(key = Probe, value = Accuracy) %>% 
+  mutate(C = Gun - (1 - Tool)) %>% 
+  select(-Gun, -Tool)
+
+# Bind to original sumStats frame
+sumStats2 <- full_join(sumStats, control)
+
+# Calculate "Auto"
+auto <- sumStats2 %>% 
+  spread(key = Probe, value = Accuracy) %>% 
+  # Auto = (Tool-trial errors) / (1 - C)
+  mutate(A = (1 - Tool)/(1 - C)) %>% 
+  select(-Gun, -Tool)
+
+# Bind to data frame
+datPDP <- full_join(sumStats2, auto) %>% 
+  # Make prettier column names
+  mutate(Condition = mapvalues(ExperimentName, 
+                               c("WIT_black_white", "WIT_neutral_black", "WIT_neutral_white"),
+                               c("BW", "BN", "WN"))) %>% 
+  # Drop redundant columns / rows
+  select(-ExperimentName, -Accuracy, -Probe) %>% 
+  distinct()
 
 # save
-write.table(datPDP, file="WIT_study1_PDPdata.txt", sep="\t", row.names=F)
+write.table(datPDP, file="WIT_study1_PDP.txt", sep="\t", row.names=F)
 
 
-##############
-# here be old analysis
-
-require(ggplot2)
-# these histograms would seem to indicate that
-# C is holding mostly constant while
-# A is shifting fairly dramatically
-ggplot(datPDP, aes(x=C)) +
-  geom_histogram(binwidth=.1) +
-  facet_wrap(~Prime*Condition, nrow=3)
-
-ggplot(datPDP, aes(x=A)) +
-  geom_histogram(binwidth=.1) +
-  facet_wrap(~Prime*Condition, nrow=3)
-
-require(lme4); require(car)
 # the general model fails to converge probably due to
 # insufficient degrees of freedom / missing cells
 # it's a pain but I'll need to run more specific contrasts...
-datPDPBlack = datPDP[datPDP$Prime == "Black",]
-datPDPWhite = datPDP[datPDP$Prime == "White",]
-datPDPNeutral=datPDP[datPDP$Prime == "Neutral",]
-datPDPBlack$Subject = as.factor(datPDPBlack$Subject)
-datPDPWhite$Subject = as.factor(datPDPWhite$Subject)
-datPDPNeutral$Subject = as.factor(datPDPNeutral$Subject)
 
+BlackA = lm(A ~ Condition, data = datPDP, subset = Cue == "Black")
+BlackC = lm(C ~ Condition, data = datPDP, subset = Cue == "Black")
+summary(BlackA)
+summary(BlackC)
 
-report = function(model) {print(summary(model)); print(Anova(model, type=3))}
+WhiteA = lm(A ~ Condition, data = datPDP, subset = Cue == "White")
+WhiteC = lm(C ~ Condition, data = datPDP, subset = Cue == "White")
+summary(WhiteA)
+summary(WhiteC)
 
-#yes! take it to the blue line
-BlackA1 = lm(A ~ Condition, dat=datPDPBlack)
-BlackC1 = lm(C ~ Condition, dat=datPDPBlack)
-summary(BlackA1)
-summary(BlackC1)
+NeutralA = lm(A ~ Condition, dat=datPDP, subset = Cue == "Neutral")
+NeutralC = lm(C ~ Condition, dat=datPDP, subset = Cue == "Neutral")
+summary(NeutralA)
+summary(NeutralC)
 
-WhiteA1 = lm(A ~ Condition, dat=datPDPWhite)
-WhiteC1 = lm(C ~ Condition, dat=datPDPWhite)
-summary(WhiteA1)
-summary(WhiteC1)
+# graphics ----
+# these histograms would seem to indicate that
+# C is holding mostly constant while
+# A is shifting fairly dramatically
+# Plots of C
+ggplot(datPDP, aes(x=C)) +
+  geom_histogram(binwidth=.1) +
+  facet_grid(Condition~Cue)
 
-NeutralA1 = lm(A ~ Condition, dat=datPDPNeutral)
-NeutralC1 = lm(C ~ Condition, dat=datPDPNeutral)
-summary(NeutralA1)
-summary(NeutralC1)
+ggplot(datPDP, aes(x = Condition, y = C)) +
+  geom_violin() +
+  geom_point() +
+  facet_grid(Cue~.) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
 
-# we'll return to this later for parameter estimates & plots.
+ggplot(datPDP, aes(x = Condition, y = C)) +
+  geom_violin() +
+  geom_boxplot(width = .5, notch = T) +
+  facet_grid(Cue~.) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
+
+# Plots of A
+ggplot(datPDP, aes(x=A)) +
+  geom_histogram(binwidth=.1) +
+  facet_grid(Condition~Cue)
+
+ggplot(datPDP, aes(x = Condition, y = A)) +
+  geom_violin() +
+  geom_point() +
+  facet_wrap(~Cue) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
+
+ggplot(datPDP, aes(x = Condition, y = A)) +
+  geom_violin() +
+  geom_boxplot(width = .35, notch = T) +
+  facet_wrap(~Cue) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0))
