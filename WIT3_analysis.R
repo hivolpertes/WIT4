@@ -8,6 +8,11 @@ library(car)
 dat = read.delim("clean_wit3.txt", stringsAsFactors = F)
 # convert subject to factor
 dat$Subject = as.factor(dat$Subject)
+# Check N
+dat %>% 
+  select(Subject, Condition, Subset) %>% 
+  distinct %>% 
+  with(., table(Condition, Subset))
 
 # analysis
 dat.acc = dat %>%
@@ -65,7 +70,7 @@ Anova(model2bg, type=3) # p = .025
 
 # Restrict analysis to just gun trials per prereg
 model3 = 
-  datACC %>%
+  dat.acc %>%
   filter(ProbeClass == "WEAP") %>%
   glmer(Probe.ACC ~ Condition * CueClass + 
           (1 + CueClass|Subject),

@@ -53,6 +53,10 @@ dat$Subject[dat$Subject == 74 & dat$SessionTime == "15:28:42"] = 110
 dat  %>% filter(Subject == 77)  %>% with(., table(Condition))
 dat$Subject[dat$Subject == 77 & dat$Condition == "GunTool"] = 76
 
+# Check N at start
+dat %>% select(Subject, Condition) %>% distinct %>% 
+  with(., table(Condition))
+
 # Two subjects were run with previous experiment's Gun-Tool file
 # Looks like they did 160 trials instead of usual 
 dat %>% filter(Subject %in% c(34, 36)) %>% with(., table(Subject, Condition))

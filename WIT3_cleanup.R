@@ -13,6 +13,14 @@ laptop = read.table("./rawdata/WIT_study3_laptopInfo.txt", header=T)
 IDsheet$Subset[IDsheet$Subset == "C"] = "Convenience"
 IDsheet$Subset[is.na(IDsheet$Subset)] = "Inconvenience"
 
+# Check pre-exclusion N
+with(IDsheet, table(Cond, Subset))
+dat %>% 
+  select(Subject, Condition) %>% 
+  distinct() %>% 
+  with(., table(Condition))
+# WARNING: THESE DON'T MATCH
+
 # Join the data frames
 dat = left_join(dat, IDsheet)
 dat = left_join(dat, laptop)
