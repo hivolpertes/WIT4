@@ -1,5 +1,10 @@
-require(lmer4)
+require(lme4)
 require(lmerTest)
+require(plyr)
+require(dplyr)
+
+# Model specification procedures for accuracy data and RT data (separately for each group of subjects that did each 
+# task [between subjects variable] and then with both task data together)
 
 # Data ingest ----
 dat = read.delim("./clean_wit4.txt")
@@ -65,8 +70,7 @@ m5 = glmer(Probe.ACC ~ CueClass * Probe +
            contrasts = list(CueClass = contr.sum,
                             Probe = contr.sum))
 summary(m5) 
-# correlations among random effects effects is high, means the data can't support that complex
-# of a model. So, need to reduce number of random effects
+# Fails to converge, need to reduce number of random effects
 
 m6 = glmer(Probe.ACC ~ CueClass * Probe + 
              (1 + CueClass + Probe|Subject) + (1|ProbeType),
@@ -74,8 +78,8 @@ m6 = glmer(Probe.ACC ~ CueClass * Probe +
            contrasts = list(CueClass = contr.sum,
                             Probe = contr.sum))
 summary(m6) 
-# correlation is still high so need to take something else out. More variance in slope
-# of probe, so keep that random
+# Converges, but correlation is still high [Check with Ed]. If need to take out another random slope, take out cueClass
+# because more variance in slope of probe
 
 m7 = glmer(Probe.ACC ~ CueClass * Probe + 
              (1 + Probe|Subject) + (1|ProbeType),
@@ -89,15 +93,16 @@ summary(m7)
 m.acc.GT = glmer(Probe.ACC ~ CueClass * Probe + 
              (1+Probe|Subject) + (1|ProbeType),
            data = dat.acc.GT, family = "binomial",
-           contrasts = list(CueClass = contr.sum,
+           contrasts = list(CueClass = contr.sum, # effect coding for both categorical variables
                             Probe = contr.sum))
-summary(m.acc.GT) 
+summary(m.acc.GT) # realized that intercept is above one- should represent grand mean of Y, so shouldn't it be less than 1?
 
 # sink(file = "./WIT4/GunToolData_accuracy.txt")
 # summary(m.acc.GT)
 # "________________________________________________________________________________________________"
 # coef(m.acc.GT)
 # sink()
+
 
 
 # Do the same for GunNeutral task ----------------------------------------
@@ -129,8 +134,7 @@ m5 = glmer(Probe.ACC ~ CueClass * Probe +
            contrasts = list(CueClass = contr.sum,
                             Probe = contr.sum))
 summary(m5) 
-# correlations among random effects effects is high, means the data can't support that complex
-# of a model. So, need to reduce number of random effects
+# Converges, but correlations among random effects effects is high. 
 
 m6 = glmer(Probe.ACC ~ CueClass * Probe + 
              (1 + CueClass + Probe|Subject) + (1|ProbeType),
@@ -138,8 +142,7 @@ m6 = glmer(Probe.ACC ~ CueClass * Probe +
            contrasts = list(CueClass = contr.sum,
                             Probe = contr.sum))
 summary(m6) 
-# correlation is still high so need to take something else out. More variance in slope
-# of probe, so keep that random
+# correlation is still high
 
 m7 = glmer(Probe.ACC ~ CueClass * Probe + 
              (1 + Probe|Subject) + (1|ProbeType),
@@ -430,3 +433,6 @@ summary(m.rt.Both)
 # "________________________________________________________________________________________________"
 # coef(m.rt.Both)
 # sink()
+
+
+lmer(Probe.RT ~ Condition * CueClass * Probe + (1 + Probe|Subject) + (1|ProbeType), data = dat.rt) %>% summary()
