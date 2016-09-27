@@ -11,6 +11,7 @@ library(compute.es)
 # library(ez)
 
 dat <- read.delim(file="clean_wit4.txt") %>% 
+  filter(SubTrial <= 121) %>% 
   select(Subject, Condition, Probe.ACC, TrialType) %>% 
   separate(TrialType, into = c("Cue", "Probe1"), sep = 5) %>% 
   mutate(Probe = ifelse(Probe1 == "Gun", "Gun", "NotGun"))
@@ -108,47 +109,43 @@ summary(blackC)
 tes(summary(blackC)$coefficients[2, 3], 38, 33)
 
 # graphics ----
-# these histograms would seem to indicate that
-# C is holding mostly constant while
-# A is shifting fairly dramatically
-# Plots of C
+# THIS SECTION IS STILL WIP
+# MOSTLY DRAGGED OVER FROM WIT2 W/O NECESSARY UPDATES
 datPDP %>% 
-  filter(Cue == "Hisp") %>% 
   ggplot(aes(x=C)) +
   geom_histogram(binwidth=.1) +
-  facet_grid(Condition~.)
+  facet_grid(Condition~Cue)
 
 datPDP %>% 
-  filter(Cue == "Hisp") %>% 
   ggplot(aes(x = Condition, y = C)) +
   geom_violin() +
-  geom_point() +
+  geom_jitter(width = .2, height = 0, alpha = .5) +
+  facet_wrap(~Cue) +
   scale_y_continuous(limits = c(0,1), expand = c(0,0))
 
 datPDP %>% 
-  filter(Cue == "Hisp") %>% 
   ggplot(aes(x = Condition, y = C)) +
   geom_violin() +
   geom_boxplot(width = .5, notch = T) +
+  facet_wrap(~Cue) +
   scale_y_continuous(limits = c(0,1), expand = c(0,0))
 
 # Plots of A
 datPDP %>% 
-  filter(Cue == "Hisp") %>% 
   ggplot(aes(x=A)) +
   geom_histogram(binwidth=.1) +
-  facet_grid(Condition~.)
+  facet_grid(Condition~Cue)
 
 datPDP %>% 
-  filter(Cue == "Hisp") %>% 
   ggplot(aes(x = Condition, y = A)) +
   geom_violin() +
   geom_point() +
+  facet_wrap(~Cue) +
   scale_y_continuous(limits = c(0,1), expand = c(0,0))
 
 datPDP %>% 
-  filter(Cue == "Hisp") %>% 
   ggplot(aes(x = Condition, y = A)) +
   geom_violin() +
   geom_boxplot(width = .35, notch = T) +
+  facet_wrap(~Cue) +
   scale_y_continuous(limits = c(0,1), expand = c(0,0))

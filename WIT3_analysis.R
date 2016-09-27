@@ -1,3 +1,4 @@
+library(plyr)
 library(dplyr)
 library(ggplot2)
 library(readxl)
@@ -13,6 +14,11 @@ dat %>%
   select(Subject, Condition, Subset) %>% 
   distinct %>% 
   with(., table(Condition, Subset))
+# Check obs/subject
+dat %>% 
+  group_by(Subject, Condition, TrialType) %>% 
+  summarize(n = n())
+  
 
 # analysis
 dat.acc = dat %>%
@@ -41,6 +47,7 @@ model1a = glmer(Probe.ACC ~ Condition * CueClass * Probe +
                data=dat.acc)
 summary(model1a)
 Anova(model1a, type=3)
+fixef(model1a)
 
 # Well, do we replicate standard WIT effect?
 # Convergence a little rough, max|grad| = .0015 vs tol = .001
@@ -105,8 +112,9 @@ plotDatACC = dat %>%
 plotDatACC %>%
   ggplot(., aes(x=interaction(CueClass, Probe), y=meanACC)) +
   #geom_violin() +
-  geom_boxplot(width = .2, notch = T) +
+  geom_boxplot(width = .4, notch = T) +
   facet_wrap(~Condition)
+# ^^^ I think this is our plot.
 
 plotDatACC %>%
   group_by(Condition, TrialType) %>%

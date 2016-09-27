@@ -32,11 +32,12 @@ dat = dat %>%
          TrialClass = factor(TrialClass, 
                              levels = c("Black-Gun", "Black-Other", "White-Gun", "White-Other"))
   )
-# Convert factors to use contrast-coding for orthogonality
-# dat = dat %>% 
-#   mutate(Condition,
-#          CueClass,
-#          Probe)
+
+# Filter for only the first 120 trials/subject to prevent fatigue confound
+# SubTrial includes an extra few values from the intermission (SubTrial 61)
+# So we filter for SubTrial <= 121
+dat <- dat %>% 
+  filter(SubTrial <= 121)
 
 # Make correct-only dataset for RT analyses
 dat.rt = dat %>% 
@@ -56,16 +57,29 @@ mAcc = glmer(Probe.ACC ~ Condition * CueClass * Probe +
                               Probe = contr.sum))
 summary(mAcc) 
 ranef(mAcc)
-# No, it does not. But note that this fails to converge max|grad| = .003 vs tol = .001
+# No, it does not. But note that this fails to converge max|grad| = .0018 vs tol = .001
+
+# Check it without random item terms 
+mAcc.1 = glmer(Probe.ACC ~ Condition * CueClass * Probe + 
+               (1 + CueClass + Probe|Subject),
+             data = dat.acc, family = "binomial",
+             contrasts = list(Condition = contr.sum,
+                              CueClass = contr.sum,
+                              Probe = contr.sum))
+# "model failed to converge, degenerate Hessian"
+summary(mAcc.1) 
+ranef(mAcc.1)
 
 # 2x2 ANOVAs ----
 # Model with random interactions would not converge, negative eigenvalues
 # Random effect of CueClass perfectly correlated w/ Cue×Probe interaction
 # Therefore this only models additive random slopes
+# Same significant interaction with or without random intercepts of stimulus.
 mAcc.GunNeu = dat.acc %>% 
   filter(Condition == "GunNeu") %>% 
   glmer(Probe.ACC ~ CueClass * Probe + 
-          (1 + CueClass + Probe|Subject), 
+          (1 + CueClass + Probe|Subject) + 
+          (1|ProbeType) + (1|CueType), 
         data = .,
         family = "binomial",
         contrasts = list(Probe = "contr.sum"))
@@ -74,14 +88,16 @@ Anova(mAcc.GunNeu, type = 3)
 
 # Very high correlation btwn interaction and main effect again worrisome, omitted
 # This models only additive random slopes
+# Again, results are the same whether including random item terms or not
 mAcc.GunTool = dat.acc %>% 
   filter(Condition == "GunTool") %>% 
   glmer(Probe.ACC ~ CueClass * Probe + 
-          (1 + CueClass + Probe|Subject), 
+          (1 + CueClass + Probe|Subject) + 
+          (1|ProbeType) + (1|CueType), 
         data = .,
         family = "binomial",
         contrasts = list(Probe = contr.sum))
-summary(mAcc.GunTool) # p = .009, although |max|grad| a bit above threshold (.0013)
+summary(mAcc.GunTool) # p = .001, although |max|grad| a bit above threshold (.0013)
 # Note problematic correlation between Cue×Probe slope and Probe slope
 
 # Pairwise contrasts for white stimuli ----

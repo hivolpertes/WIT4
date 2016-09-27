@@ -29,10 +29,13 @@ dat = dat %>%
 
 # What's going on here? 
 # Some have 120 rows, some have 240 rows, some have other # of rows
-sum1 = dat %>% 
-  group_by(Subject, Condition) %>% 
-  summarize(length = length(Session))
-table(sum1$Condition, sum1$length)
+dat %>% 
+  group_by(Subject, Condition, TrialType) %>% 
+  summarize(length = n()) %>% 
+  ungroup() %>% 
+  select(-Subject) %>% 
+  distinct()
+
 # Looks like subjects in GunNeu condition did 240 trials, GunTool did 120
 # That's a potential serious confound :-\
 # Could try to address it by taking just the first 120 trials from GunNeu I guess
@@ -71,10 +74,13 @@ mean.acc = dat %>%
 hist(mean.acc$accuracy)
 # What's necessary accuracy for p < .01 above chance in 120 trials?
 qbinom(.99, 120, .5, lower.tail = T)/120
+qbinom(.95, 120, .5, lower.tail = T)/120
 # Must be 60.8% accurate to ride
 hist(mean.acc$accuracy[mean.acc$accuracy > .3])
 abline(v = .608, col = 'red')
 bad = mean.acc$Subject[mean.acc$accuracy < .608]
+# Or 57.5% accurate?
+bad.05 = mean.acc$Subject[mean.acc$accuracy < .575]
 
 # Filter out bad-accuracy subjects
 dat = dat %>% 
@@ -82,7 +88,19 @@ dat = dat %>%
 
 # TODO: Filter out Black subjects
 # TODO: Ask Hannah what race is which code.
+dat %>% 
+  select(Subject, Race.RESP) %>% 
+  distinct() %>% 
+  group_by(Race.RESP) %>% 
+  summarize(n = n())
 dat = dat %>%
   filter(Race.RESP != 2)
+
+# Final N
+dat %>% 
+  select(Subject, Condition) %>% 
+  distinct() %>% 
+  group_by(Condition) %>% 
+  summarize(n = n())
 
 write.table(dat, "clean_wit4.txt", sep = "\t", row.names = F)
