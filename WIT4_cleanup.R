@@ -44,6 +44,9 @@ dat %>%
 dat = dat %>% 
   filter(!(Subject %in% c(1, 2, 4, 5, 35)))
 
+# Subjects 14, 15 were mistakenly run as 15, 16, leading to two IDs for 16
+dat$Subject[dat$Subject == 15] <- 14
+dat$Subject[dat$Subject == 16 & dat$Condition == "GunTool"] <- 15
 # Hannah tells me Subject 58 was run as 57
 dat$Subject[dat$Subject == 57 & dat$Condition == "GunNeu"] = 58
 # Hannah tells me Subject 74 is two different people
@@ -104,3 +107,21 @@ dat %>%
   summarize(n = n())
 
 write.table(dat, "clean_wit4.txt", sep = "\t", row.names = F)
+
+# condense for repeated-measures ANOVA
+dat.acc <- dat %>% 
+  filter(feedbackmask == "fast") %>% 
+  group_by(Subject, Session, Condition, mapping, TrialType) %>% 
+  summarise(Probe.ACC = mean(Probe.ACC)) %>% 
+  mutate(TrialType2 = TrialType) %>% 
+  separate(TrialType2, into = c("Prime", "Target"), sep = 5)
+
+dat.rt <- dat %>% 
+  filter(Probe.ACC == 1) %>% 
+  group_by(Subject, Session, Condition, mapping, TrialType) %>% 
+  summarise(Probe.RT = mean(Probe.RT)) %>% 
+  mutate(TrialType2 = TrialType) %>% 
+  separate(TrialType2, into = c("Prime", "Target"), sep = 5)
+
+write.table(dat.acc, "acc_wit4.txt", sep = "\t", row.names = F)
+write.table(dat.rt, "rt_wit4.txt", sep = "\t", row.names = F)
