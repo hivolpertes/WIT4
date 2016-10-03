@@ -107,3 +107,17 @@ dat = dat %>%
   filter(!(Subject %in% badSubs))
 
 write.table(dat, "clean_wit3.txt", sep = "\t", row.names = F)
+
+dat.acc <- dat %>% 
+  filter(feedbackmask == "fast") %>% 
+  group_by(Subject, Condition, mapping, TrialType, CueClass, ProbeClass) %>% 
+  summarize(Probe.ACC = mean(Probe.ACC))
+
+write.table(dat.acc, file = "acc_wit3.txt", sep = "\t", row.names = F)
+
+dat.rt <- dat %>% 
+  filter(Probe.ACC == 1) %>% 
+  group_by(Subject, Condition, mapping, TrialType, CueClass, ProbeClass) %>% 
+  summarize(Probe.RT = mean(Probe.RT))
+
+write.table(dat.rt, file = "rt_wit3.txt", sep = "\t", row.names = F)

@@ -71,3 +71,17 @@ dat = dat %>%
   filter(race != "minority")
 
 write.table(dat, file="clean_wit1.txt", sep="\t", row.names=F)
+
+dat.acc <- dat %>% 
+  filter(feedduration == 500) %>% 
+  group_by(Subject, ExperimentName, mapping, Cue, Probe) %>% 
+  summarize(Probe.ACC = mean(Probe.ACC))
+
+write.table(dat.acc, file = "acc_wit1.txt", sep = "\t", row.names = F)
+
+dat.rt <- dat %>% 
+  filter(Probe.ACC == 1) %>% 
+  group_by(Subject, ExperimentName, mapping, Cue, Probe) %>% 
+  summarize(Probe.RT = mean(Probe.RT))
+
+write.table(dat.rt, file = "rt_wit1.txt", sep = "\t", row.names = F)

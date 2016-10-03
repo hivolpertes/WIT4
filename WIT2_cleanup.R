@@ -1,6 +1,3 @@
-#NOTE: SCHERER_2013_D.TXT IS INSUFFICIENT, AS i WILL NEED THE SPECIFIC FACE.BMP INFORMATION
-#  I AM ALSO CURIOUS TO INSPECT THE DATE & TIME INFORMATION FOR SUBJECT 1
-
 # Script 1:
 # Scherer Study 2 Preprocessing
 # This script deletes blank trials, 
@@ -12,6 +9,7 @@
 
 library(plyr)
 library(dplyr)
+library(tidyr)
 
 dat = read.delim(file="./rawdata/WIT_study2_raw.txt", sep="\t")
 
@@ -19,7 +17,14 @@ dat = read.delim(file="./rawdata/WIT_study2_raw.txt", sep="\t")
 dat = dat %>% 
   select(Subject, Session, mapping, Procedure.Trial., Condition, Trial,
          TrialType, CueType, ProbeType, Procedure.LogLevel5.,
-         feedduration, Probe.ACC, Probe.RT)
+         feedduration, Probe.ACC, Probe.RT) %>% 
+  # Mutate TrialType into something more manageable
+  mutate(TrialType = mapvalues(TrialType, 
+                               from = c("BlackGun", "BlackTool", "HispGun", "HispTool",
+                                        "NeutGun", "NeutTool", "WhiteGun", "WhiteTool"),
+                               to = c("Black.Gun", "Black.Tool", "Hisp.Gun", "Hisp.Tool",
+                                      "Neut.Gun", "Neut.Tool", "White.Gun", "White.Tool")))
+  
 
 # Drop two bad subject-files: Subject 1 session 22 has no accuracy,
 #  and Subject 883 is probably me doing debug work
@@ -76,3 +81,21 @@ dat = dat %>%
   filter(!(race == "african"))
 
 write.table(dat, file="clean_wit2.txt", sep="\t", row.names=F)
+
+dat.acc <- dat %>% 
+  filter(feedduration == 500) %>% 
+  group_by(Subject, Condition, mapping, TrialType, race) %>% 
+  summarize(Probe.ACC = mean(Probe.ACC)) %>% 
+  ungroup() %>% 
+  separate(TrialType, into = c("Prime", "Target"), "\\.")
+
+write.table(dat.acc, file = "acc_wit2.txt", sep = "\t", row.names = F)
+
+
+dat.rt <- dat %>% 
+  filter(Probe.ACC == 1) %>% 
+  group_by(Subject, Condition, mapping, TrialType, race) %>% 
+  summarize(Probe.RT = mean(Probe.RT)) %>% 
+  ungroup() %>% 
+  separate(TrialType, into = c("Prime", "Target"), "\\.")
+write.table(dat.rt, file = "rt_wit2.txt", sep = "\t", row.names = F)
