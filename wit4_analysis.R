@@ -60,4 +60,7 @@ summary(mod6)
 # Can I even do Bayesian analyses? The within-subjects stuff seems to make it 
 #  extremely computatationally expensive.
 # Bayesian analysis
-# b1 <- anovaBF(Probe.ACC ~ Condition * Prime * TargetGrp + Subject, data = dat.acc)
+b1 <- anovaBF(Probe.ACC ~ Condition * Prime * TargetGrp + Subject, 
+              data = dat.acc,
+              whichRandom = "Subject")
+b1 # decent support for Prime x Target interaction
