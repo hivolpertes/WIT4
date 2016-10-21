@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(lme4)
 library(car)
+library(afex)
 
 esci <- function(SS, SSE, df.1, df.2, conf.level, digits = 2) {
   partial_eta <- SS/(SS + SSE)

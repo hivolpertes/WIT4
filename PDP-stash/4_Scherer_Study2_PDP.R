@@ -5,8 +5,7 @@ library(ggplot2)
 library(lme4)
 library(car)
 # How to get effect sizes?
-library(compute.es)
-# library(afex)
+library(afex)
 # library(ez)
 
 dat <- read.delim(file="clean_wit2.txt") %>% 
@@ -79,6 +78,11 @@ datPDP %>%
   summarize(n = n())
 
 # Run models ----
+summary(aov(A ~ Condition, data = datPDP, subset = Cue == "Hisp"))
+esci(.2506, 1.3230, 2, 69, .9)
+summary(aov(C ~ Condition, data = datPDP, subset = Cue == "Hisp"))
+esci(.1448, 2.7944, 2, 69, .9)
+
 hispanicA <- lm(A ~ Condition, data = datPDP, subset = Cue == "Hisp")
 hispanicC <- lm(C ~ Condition, data = datPDP, subset = Cue == "Hisp")
 summary(hispanicA)
@@ -87,6 +91,9 @@ tes(summary(hispanicA)$coefficients[3, 3], 20, 27)
 summary(hispanicC)
 tes(summary(hispanicC)$coefficients[2, 3], 20, 25)
 tes(summary(hispanicC)$coefficients[3, 3], 20, 27)
+
+TukeyHSD(aov(A ~ Condition, data = datPDP, subset = Cue == "Hisp"))
+TukeyHSD(aov(C ~ Condition, data = datPDP, subset = Cue == "Hisp"))
 
 # graphics ----
 # these histograms would seem to indicate that

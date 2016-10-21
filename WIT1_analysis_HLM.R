@@ -55,6 +55,13 @@ m2 = dat.acc %>%
 summary(m2)
 Anova(m2, type = 3) 
 
+# White-Gun vs White-Tool
+filter(dat.acc, Condition == "black_white", Cue == "White") %>% 
+  glmer(Probe.ACC ~ Probe + (1|Subject),
+        data = ., family = "binomial",
+        contrasts = list(Probe = "contr.sum")) %>% 
+  summary()
+
 m3 = dat.acc %>% 
   filter(Condition == "neutral_black") %>% 
   glmer(Probe.ACC ~ Cue * Probe + (1|Subject),
