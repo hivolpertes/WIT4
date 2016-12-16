@@ -70,7 +70,7 @@ mod3 <- dat.acc %>%
 summary(mod3)
 esci(SS = .08437, SSE = .09608, conf = .90, df.1 = 1, df.2 = 27)
 esci(SS = .06813, SSE = .30501, conf = .90, df.1 = 1, df.2 = 27)
-esci(SS = 1.1511, SSE = .3292, conf = .90, df.1 = 1, df.2 = 27)
+esci(SS = 1.1511, SSE = .3292, conf = .90, df.1 = 1, df.2 = 27) # huge!
 
 dat.acc %>% 
   filter(Condition == "neutral_black", Cue == "Black") %>% 

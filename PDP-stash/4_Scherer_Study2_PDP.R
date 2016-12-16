@@ -140,3 +140,9 @@ datPDP %>%
   geom_violin() +
   geom_boxplot(width = .35, notch = T) +
   scale_y_continuous(limits = c(0,1), expand = c(0,0))
+
+# Table
+datPDP %>% group_by(Condition, Cue) %>% 
+  summarize(A = round(mean(A), 2), 
+            C = round(mean(C), 2)) 
+

@@ -54,3 +54,19 @@ mod4 <- dat.acc %>%
       data = .)
 summary(mod4)
 esci(.0187, .3383, 1, 54, .9)
+
+# Is it powered by the tool-target trials, then?
+mod5 <- dat.acc %>% 
+  filter(Probe == "Not-Gun") %>% 
+  aov(Probe.ACC ~ CueClass * Condition + Error(Subject/CueClass),
+      data = .)
+summary(mod5)
+
+# Table
+wit3means <- dat.acc %>% 
+  group_by(Condition, CueClass, Probe) %>% 
+  summarize(acc = round(mean(Probe.ACC), 3))
+
+ggplot(wit3means, aes(x = Probe, y = acc)) +
+  geom_bar(stat = "identity") +
+  facet_grid(Condition ~ CueClass)

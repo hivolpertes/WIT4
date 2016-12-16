@@ -38,9 +38,10 @@ dat.rt = dat %>%
 # Did I do this wrong? Takes forever to run on my laptop
 # Consider role of random slopes.
 # See if I can retrieve random stimulus data
-# Model fails to converge
+# Tweaked algorithm allows convergence
 m1 = glmer(Probe.ACC ~ Condition * CueClass * Probe + (1|Subject),
-          data = dat.acc, family = "binomial")
+          data = dat.acc, family = "binomial",
+          control = glmerControl(optimizer="bobyqa"))
 summary(m1)
 Anova(m1, type = 3)
 

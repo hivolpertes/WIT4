@@ -106,10 +106,16 @@ summary(mod5)
 esci(.2396, .6360, 1, 69, .90)
 esci(.1066, .6360, 1, 69, .90)
 
+# Means
+dat.acc %>% 
+  group_by(Condition, Prime, Target) %>% 
+  summarise(mean_acc = mean(Probe.ACC))
+
 # How do I do these follow-up contrasts?
 # Liz Page-Gould has a thing at http://www.page-gould.com/r/anova/
 
 # afex seems promising?
+library(afex)
 a1 <- aov_ez(id = "Subject", 
              dv = "Probe.ACC",
              data = filter(dat.acc, Prime == "Hisp"),
