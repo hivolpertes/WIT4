@@ -5,6 +5,7 @@ library(ggplot2)
 library(lme4)
 library(car)
 library(BayesFactor)
+library(MBESS)
 library(yarrr)
 library(heplots)
 
@@ -32,8 +33,10 @@ dat.rt <- read.delim("rt_wit4.txt", stringsAsFactors = F) %>%
 mod1 <- aov(Probe.ACC ~ Condition * Prime * TargetGrp + Error(Subject/(Prime*TargetGrp)),
             data = dat.acc)
 summary(mod1)
-esci(.00, .4370, 1, 69, .9) # Nothing to the 3-way
+esci(.00004, .4370, 1, 69, .9) # Nothing to the 3-way
 esci(.1243, .4370, 1, 69, .9) # Clearly something to the 2-way
+
+# F = 0.00 is odd, let's double-check
 
 ggplot(dat.acc, aes(x = interaction(Prime,TargetGrp), y = Probe.ACC)) +
   geom_point() +
@@ -63,6 +66,8 @@ mod4 <- dat.acc %>%
   aov(Probe.ACC ~ TargetGrp + Error(Subject/TargetGrp), data = .)
 summary(mod4)
 esci(.0188, .3415, 1, 32, .9)
+
+# A t-test could be a nicer parameterization
 
 mod5 <- dat.acc %>% 
   filter(Prime == "White" & Condition == "GunNeu") %>% 

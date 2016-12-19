@@ -4,6 +4,7 @@ library(ggplot2)
 library(lme4)
 library(car)
 library(afex)
+library(MBESS)
 
 esci <- function(SS, SSE, df.1, df.2, conf.level, digits = 2) {
   partial_eta <- SS/(SS + SSE)
@@ -55,17 +56,27 @@ mod4 <- dat.acc %>%
 summary(mod4)
 esci(.0187, .3383, 1, 54, .9)
 
-# Is it powered by the tool-target trials, then?
+# Is it powered by the not-gun-target trials, then?
 mod5 <- dat.acc %>% 
   filter(Probe == "Not-Gun") %>% 
   aov(Probe.ACC ~ CueClass * Condition + Error(Subject/CueClass),
       data = .)
 summary(mod5)
+esci(.0351, .3419, 1, 54, .9)
 
 # Table
 wit3means <- dat.acc %>% 
   group_by(Condition, CueClass, Probe) %>% 
   summarize(acc = round(mean(Probe.ACC), 3))
+
+# interpreting the 3-way
+filter(wit3means, Probe == "Gun")
+# Black primes increase gun-trial accuracy in Gun/Tool task, 
+# but decrease accuracy for Gun/Black task
+# But not significant, p = .09
+filter(wit3means, Probe == "Not-Gun")
+# Black primes increase black-target accuracy in Black/Gun task,
+# Black primes decrease tool-target accuracy in Black/Tool task
 
 ggplot(wit3means, aes(x = Probe, y = acc)) +
   geom_bar(stat = "identity") +
