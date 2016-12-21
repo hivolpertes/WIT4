@@ -5,6 +5,7 @@ library(lme4)
 library(car)
 library(afex)
 library(MBESS)
+library(BayesFactor)
 
 esci <- function(SS, SSE, df.1, df.2, conf.level, digits = 2) {
   partial_eta <- SS/(SS + SSE)
@@ -21,7 +22,10 @@ esci <- function(SS, SSE, df.1, df.2, conf.level, digits = 2) {
 
 dat.acc <- read.delim("acc_wit3.txt", stringsAsFactors = F) %>% 
   mutate(Subject = as.factor(Subject),
-         Probe = ifelse(ProbeClass == "WEAP", "Gun", "Not-Gun"))
+         Probe = ifelse(ProbeClass == "WEAP", "Gun", "Not-Gun")) %>% 
+  mutate(CueClass = as.factor(CueClass),
+         Probe = as.factor(Probe),
+         Condition = as.factor(Condition))
 dat.rt <- read.delim("rt_wit3.txt", stringsAsFactors = F) %>% 
   mutate(Subject = as.factor(Subject),
          Probe = ifelse(ProbeClass == "WEAP", "Gun", "Not-Gun"))
@@ -81,3 +85,55 @@ filter(wit3means, Probe == "Not-Gun")
 ggplot(wit3means, aes(x = Probe, y = acc)) +
   geom_bar(stat = "identity") +
   facet_grid(Condition ~ CueClass)
+
+# Bayes ----
+# Keep in mind this "linear probability model" is not ideal model
+# 3-way interaction?
+mod1BF <- anovaBF(Probe.ACC ~ CueClass * Probe * Condition + Subject,
+                whichRandom = "Subject", 
+                data = dat.acc,
+                iterations = 5e4)
+summary(mod1BF)
+sort(mod1BF)
+
+# Best model: Condition + Probe + Condition:Probe
+mod1BF[10]
+sort(mod1BF)[18]
+
+# Compare 3-way interaction to 2-ways only model
+mod1BF[17]/mod1BF[18] # Ambiguous
+# Compare 3-way interaction to ...?
+
+
+# Standard WIT effect?
+mod2BF <- dat.acc %>% 
+  filter(Condition == "GunTool") %>% 
+  anovaBF(Probe.ACC ~ CueClass * Probe + Subject,
+          whichRandom = "Subject",
+          data = .,
+          iterations = 5e4)
+summary(mod2BF)
+
+# Mild evidence against the usual 2-way interaction,
+# Best model is just main effect of probe
+
+
+# and in Black/Gun task?
+mod3BF <- dat.acc %>% 
+  filter(Condition == "BlackGun") %>% 
+  anovaBF(Probe.ACC ~ CueClass * Probe + Subject,
+          whichRandom = "Subject",
+          data = .)
+summary(mod3BF)
+# Again, best model is just a main effect of Probe
+
+# Specific test on Gun-target trials
+mod4BF <- dat.acc %>% 
+  filter(Probe == "Gun") %>% 
+  anovaBF(Probe.ACC ~ CueClass * Condition + Subject,
+      whichRandom = "Subject",
+      data = .)
+summary(mod4BF)
+# Nothing! But the evidence regarding the interaction is only ambiguous
+mod4BF[4]/mod4BF[3]
+

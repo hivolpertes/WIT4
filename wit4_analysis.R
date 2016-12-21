@@ -82,10 +82,31 @@ mod6 <- dat.acc %>%
 summary(mod6)
 esci(.0494, .6429, 1, 69, .9)
 
-# Can I even do Bayesian analyses? The within-subjects stuff seems to make it 
-#  extremely computatationally expensive.
-# Bayesian analysis
+# Bayesian ----
+# Bayesian analysis, all cells
 b1 <- anovaBF(Probe.ACC ~ Condition * Prime * TargetGrp + Subject, 
               data = dat.acc,
               whichRandom = "Subject")
 b1 # decent support for Prime x Target interaction w/o 3-way
+b1["Prime + TargetGrp + Prime:TargetGrp + Subject"]/b1["Prime + TargetGrp + Subject"]
+b1["Prime + TargetGrp + Prime:TargetGrp + Subject"]/b1["Prime + TargetGrp + Subject"]
+
+# Bayesian analysis, within GunTool
+b2 <- dat.acc %>% 
+  filter(Condition == "GunTool") %>% 
+  anovaBF(Probe.ACC ~ Prime * TargetGrp + Subject,
+          whichRandom = "Subject",
+          data = .)
+b2 # Nothing???
+b2[4]/b2[3] # 5.4:1 odds for the interaction
+
+# Bayesian analysis, within GunNeu
+b3 <- dat.acc %>% 
+  filter(Condition == "GunNeu") %>% 
+  anovaBF(Probe.ACC ~ Prime * TargetGrp + Subject,
+          whichRandom = "Subject",
+          data = .)
+b3 # Nothing???
+b3[4]/b3[3] # 17.7:1 odds for the interaction
+
+# Is it a parameterization thing?
