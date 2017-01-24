@@ -82,6 +82,7 @@ filter(wit3means, Probe == "Not-Gun")
 # Black primes increase black-target accuracy in Black/Gun task,
 # Black primes decrease tool-target accuracy in Black/Tool task
 
+# CIs would sure make this easier to understand :(
 ggplot(wit3means, aes(x = Probe, y = acc)) +
   geom_bar(stat = "identity") +
   facet_grid(Condition ~ CueClass)
