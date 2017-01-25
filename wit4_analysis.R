@@ -31,18 +31,27 @@ dat.rt <- read.delim("rt_wit4.txt", stringsAsFactors = F) %>%
 
 # First, look for 2-way and/or 3-way interaction
 mod1 <- aov(Probe.ACC ~ Condition * Prime * TargetGrp + Error(Subject/(Prime*TargetGrp)),
+            contrasts = list(Condition = "contr.sum",
+                             Prime = "contr.sum",
+                             TargetGrp = "contr.sum"),
             data = dat.acc)
 summary(mod1)
 esci(.00004, .4370, 1, 69, .9) # Nothing to the 3-way
 esci(.1243, .4370, 1, 69, .9) # Clearly something to the 2-way
 
-# F = 0.00 is odd, let's double-check
-
-ggplot(dat.acc, aes(x = interaction(Prime,TargetGrp), y = Probe.ACC)) +
-  geom_point() +
-  geom_violin() +
-  geom_boxplot(notch = T, width = .4) +
+lsmeans(mod1, c("Condition", "Prime", "TargetGrp")) %>% 
+  summary() %>% 
+  ggplot(aes(x = interaction(Prime,TargetGrp), y = lsmean, 
+             ymin = lower.CL, ymax = upper.CL)) +
+  geom_pointrange() +
   facet_wrap(~Condition)
+
+wit4means <- dat.acc %>% 
+  group_by(Condition, Prime, TargetGrp) %>% 
+  summarize(acc = round(mean(Probe.ACC), 3))
+ggplot(wit4means, aes(x = TargetGrp, y = acc)) +
+  geom_bar(stat = "identity") +
+  facet_grid(Condition ~ Prime)
 
 # Within GunTool WIT
 mod2 <- dat.acc %>% 

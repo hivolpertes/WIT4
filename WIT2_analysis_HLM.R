@@ -17,7 +17,8 @@ dat = read.delim("clean_wit2.txt")
 dat = dat %>% 
   mutate(Cue = substring(CueType, 1, 4),
          Probe = substring(ProbeType, 1, 4),
-         CueClass = ifelse(TrialType %in% c("HispGun", "HispTool"), "Hisp", "NonHisp"))
+         CueClass = ifelse(TrialType %in% c("HispGun", "HispTool"), "Hisp", "NonHisp"),
+         Subject = as.factor(Subject))
 
 # make accuracy and RT datasets
 dat.acc = dat %>% 
@@ -27,8 +28,6 @@ dat.rt = dat %>%
 
 # 2x3 interaction where Prime == hisp
 # Accuracy
-# Note: Model currently failing to converge, gradient .004 instead of default .001
-# Switching to Nelder_Mead optimizer did not fix that, nor did increasing maxfun to 2e5.
 m1 = dat.acc %>% 
   filter(Cue == "hisp") %>% 
   glmer(Probe.ACC ~ Condition * Probe + 

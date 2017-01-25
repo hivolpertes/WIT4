@@ -57,7 +57,7 @@ dat  %>% filter(Subject == 74)  %>% with(., table(Condition, SessionTime))
 dat$Subject[dat$Subject == 74 & dat$SessionTime == "15:28:42"] = 110
 # Hannah tells me Subject 77 is two different people
 dat  %>% filter(Subject == 77)  %>% with(., table(Condition))
-dat$Subject[dat$Subject == 77 & dat$Condition == "GunTool"] = 76
+dat$Subject[dat$Subject == 77 & dat$Condition == "GunTool"] <-  76
 
 # Check N at start
 dat %>% select(Subject, Condition) %>% distinct %>% 
@@ -69,7 +69,7 @@ dat %>% filter(Subject %in% c(34, 36)) %>% with(., table(Subject, Condition))
 # Discard them for now but think about if they can/should be used
 dat = dat %>% filter(!(Subject %in% c(34, 36)))
 
-# TODO: Discard anybody not performing significantly above chance
+# Discard anybody not performing significantly above chance
 mean.acc = dat %>% 
   group_by(Subject) %>% 
   summarize(accuracy = mean(Probe.ACC, na.rm = T))
@@ -89,8 +89,7 @@ bad.05 = mean.acc$Subject[mean.acc$accuracy < .575]
 dat = dat %>% 
   filter(!(Subject %in% bad))
 
-# TODO: Filter out Black subjects
-# TODO: Ask Hannah what race is which code.
+# Filter out Black subjects (race code 2)
 dat %>% 
   select(Subject, Race.RESP) %>% 
   distinct() %>% 
@@ -109,10 +108,11 @@ dat %>%
 write.table(dat, "clean_wit4.txt", sep = "\t", row.names = F)
 
 # condense for repeated-measures ANOVA
+# Note that this retained the trials beyond 120
 dat.acc <- dat %>% 
   filter(feedbackmask == "fast") %>% 
   group_by(Subject, Session, Condition, mapping, TrialType) %>% 
-  summarise(Probe.ACC = mean(Probe.ACC)) %>% 
+  summarise(Probe.ACC = mean(Probe.ACC), n = n()) %>% 
   mutate(TrialType2 = TrialType) %>% 
   separate(TrialType2, into = c("Prime", "Target"), sep = 5)
 

@@ -38,6 +38,7 @@ model1 = glmer(Probe.ACC ~ Condition * CueClass * Probe +
 summary(model1)
 Anova(model1, type=3)
 
+# This converges nicely
 model1a = glmer(Probe.ACC ~ Condition * CueClass * Probe + 
                  (1 + CueClass + Probe|Subject), 
                contrasts = list(Condition = "contr.sum",
@@ -45,13 +46,13 @@ model1a = glmer(Probe.ACC ~ Condition * CueClass * Probe +
                                 Probe = "contr.sum"),
                family = "binomial",
                data=dat.acc)
-summary(model1a)
+summary(model1a) # 3-way interaction z = -2.94, p = .003
 Anova(model1a, type=3)
 fixef(model1a)
 
 # Well, do we replicate standard WIT effect?
 # Convergence a little rough, max|grad| = .0015 vs tol = .001
-# Again notice terribly high correlation of random slope parameters
+# Again notice high correlation of random slope parameters
 model2gt = 
   dat.acc %>%
   filter(Condition == "GunTool") %>%
@@ -63,7 +64,7 @@ model2gt =
 summary(model2gt)
 Anova(model2gt, type=3) # p = .055
 
-# What about in the novel task?
+# Interaction effect in modified WIT?
 # Negative eigenvalues if modeling random slopes of Cue-Probe interaction
 model2bg = dat.acc %>%
   filter(Condition == "BlackGun") %>%
@@ -87,6 +88,19 @@ model3 =
 summary(model3)
 Anova(model3, type=3) # null result, p = .15
 fixef(model3)
+
+# Analysis just on non-gun trials
+model4 = 
+  dat.acc %>%
+  filter(ProbeClass != "WEAP") %>%
+  glmer(Probe.ACC ~ Condition * CueClass + 
+          (1 + CueClass|Subject),
+        family = "binomial",
+        contrasts = list(CueClass = "contr.sum"),
+        data = .)
+summary(model4)
+Anova(model4, type=3) # p = .017
+fixef(model4)
 
 # Well what's our damn sample size like?
 datACC  %>% distinct(Subject, Condition)  %$% table(Condition) # not great!

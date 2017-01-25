@@ -36,8 +36,8 @@ dat = dat %>%
 # Filter for only the first 120 trials/subject to prevent fatigue confound
 # SubTrial includes an extra few values from the intermission (SubTrial 61)
 # So we filter for SubTrial <= 121
-dat <- dat %>% 
-  filter(SubTrial <= 121)
+# dat <- dat %>% 
+#   filter(SubTrial <= 121)
 
 # Make correct-only dataset for RT analyses
 dat.rt = dat %>% 
@@ -58,6 +58,15 @@ mAcc = glmer(Probe.ACC ~ Condition * CueClass * Probe +
 summary(mAcc) 
 ranef(mAcc)
 # No, it does not. But note that this fails to converge max|grad| = .0018 vs tol = .001
+
+# does lsmeans() work on glmer objects? Oh hell yeah it does
+lsmeans(mAcc, c("Condition", "CueClass", "Probe")) %>% 
+  summary() %>% 
+  ggplot(aes(x = interaction(CueClass, Probe), y = lsmean, 
+             ymin = asymp.LCL, ymax = asymp.UCL)) +
+  geom_pointrange() +
+  facet_wrap(~Condition) +
+  geom_hline(yintercept = 1, lty = 2)
 
 # Check it without random item terms 
 mAcc.1 = glmer(Probe.ACC ~ Condition * CueClass * Probe + 
@@ -82,7 +91,8 @@ mAcc.GunNeu = dat.acc %>%
           (1|ProbeType) + (1|CueType), 
         data = .,
         family = "binomial",
-        contrasts = list(Probe = "contr.sum"))
+        contrasts = list(Probe = "contr.sum",
+                         CueClass = "contr.sum"))
 summary(mAcc.GunNeu) # Highly significant, p < .001
 Anova(mAcc.GunNeu, type = 3)
 
