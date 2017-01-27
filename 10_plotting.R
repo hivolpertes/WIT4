@@ -1,6 +1,8 @@
 # All plots in one place
+library(plyr)
 library(tidyverse)
 library(lme4)
+library(lsmeans)
 
 dat1 <- read.delim("./clean_wit1.txt")
 dat2 <- read.delim("./clean_wit2.txt")
@@ -40,12 +42,16 @@ Anova(exp1.glmer, type = 3)
 
 # make plot. Note that it appears to be in odds space
 # Could expand the grid to make 3×2 grid with missing cells
-lsmeans(exp1.glmer, c("Condition", "CueClass", "Probe")) %>% 
-  summary() %>% 
-  ggplot(aes(x = Probe, y = lsmean, 
-             ymin = asymp.LCL, ymax = asymp.UCL)) +
+exp1.means <- lsmeans(exp1.glmer, c("Condition", "CueClass", "Probe")) %>% 
+  summary()
+cue.labels <- select(dat1, Condition, CueClass, Probe, Cue) %>% 
+  distinct
+exp1.means <- left_join(exp1.means, cue.labels)
+
+ggplot(exp1.means, aes(x = Probe, y = lsmean, 
+                       ymin = asymp.LCL, ymax = asymp.UCL)) +
   geom_pointrange() +
-  facet_grid(Condition ~ CueClass) +
+  facet_grid(Condition ~ Cue) +
   geom_hline(yintercept = 1, lty = 2)
 
 # Experiment 2 ----
@@ -124,7 +130,7 @@ dat4 <- dat4 %>%
          CueClass = substr(CueType, 1, 5),
          Probe = ifelse(ProbeClass == "Weapon", "Weapon", "Other")) %>% 
   # Filter out trials after the 120th and too-slow trials
-  filter(SubTrial <= 121,  
+  filter(#SubTrial <= 121,  
          feedbackmask == "fast") 
 
 dat4.summary <- read.delim("acc_wit4.txt", stringsAsFactors = F) %>% 

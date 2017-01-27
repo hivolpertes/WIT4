@@ -111,6 +111,33 @@ summary(mAcc.GunTool) # p = .001, although |max|grad| a bit above threshold (.00
 # Note problematic correlation between Cue×Probe slope and Probe slope
 
 # Pairwise contrasts for white stimuli ----
+# Typical WIT
+# Without random subject-slopes and item-intercepts
+GunTool.white.acc = dat.acc %>% 
+  filter(Condition == "GunTool", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1|Subject), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(GunTool.white.acc) # ns, p = .138
+
+# with random everything
+GunTool.white.acc.ranef = dat.acc %>% 
+  filter(Condition == "GunTool", CueClass == "white") %>% 
+  glmer(Probe.ACC ~ Probe + (1 + Probe|Subject) + (1|ProbeType) + (1|CueType), 
+        data = .,
+        family = "binomial",
+        contrasts = list(Probe = contr.sum))
+summary(GunTool.white.acc.ranef) # ns, p = .634
+rfx.guntool = ranef(GunTool.white.acc.ranef) # save to object
+# inspect distribution of random intercepts of probeType
+rfx.guntool$ProbeType %>% 
+  mutate(., Item = row.names(.),
+         Group = rep(c("Misc", "Gun"), each = 4)) %>%
+  ggplot(aes(x = Item, y = `(Intercept)`, fill = Group)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
 # Gun - NotGun condition
 # Here I run the same analysis several times with different random terms
 # Without random subject-slopes and item-intercepts
