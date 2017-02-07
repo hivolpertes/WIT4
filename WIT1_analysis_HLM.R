@@ -15,6 +15,10 @@ dat = mutate(dat, Subject = as.factor(Subject))
 # add columns -- see 7_Study1_Sas-analysis
 # this is still WIP, might not need it
 dat = dat %>% 
+  mutate(TrialType = dplyr::recode(TrialType, 
+                                   BlackGun = "Black.Gun", WhiteGun = "White.Gun", NeutralGun = "Neutral.Gun",
+                                   BlackTool = "Black.Tool", WhiteTool = "White.Tool", NeutralTool = "Neutral.Tool")) %>% 
+  separate(TrialType, c("Cue", "Probe"), sep = "\\.") %>% 
   mutate(Condition = substring(ExperimentName, 5)) %>% # prune "WIT_" prefix
   mutate(ConditionCue = paste(Condition, Cue))
 
@@ -44,6 +48,26 @@ m1 = glmer(Probe.ACC ~ Condition * CueClass * Probe + (1|Subject),
           control = glmerControl(optimizer="bobyqa"))
 summary(m1)
 Anova(m1, type = 3)
+
+# Maximal random model?
+m1.full = glmer(Probe.ACC ~ Condition * CueClass * Probe + 
+                  (1 + CueClass * Probe|Subject) + (1|CueType) + (1|ProbeType),
+           data = dat.acc, family = "binomial",
+           control = glmerControl(optimizer="bobyqa"))
+summary(m1.full)
+Anova(m1.full, type = 3) # wow, seems to converge OK
+
+lsmeans(m1.full, c("Condition", "CueClass", "Probe")) %>% 
+          summary()
+# Remember Class_A are the hypothesized gun primes
+# So for Black/White condition, White Tool - White Gun,
+# I want CueClass == Class_B, Condition == black_white
+lsmeans(m1.full, c("Condition", "CueClass", "Probe")) %>% 
+  contrast(list(WhiteGun.vs.WhiteTool = c(0, 0, 0, 
+                                          -1, 0, 0, 
+                                          0, 0, 0, 
+                                          1, 0, 0)))
+
 
 # 2x2s within each level of Condition
 # These models converge

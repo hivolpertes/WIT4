@@ -10,7 +10,7 @@ library(plyr)
 library(dplyr)
 
 # data ingest
-dat = read.delim(file = "./rawdata/WIT_study1_raw.txt")
+dat = read.delim(file = "./rawdata/WIT_study1_realraw.txt")
 
 # data cleaning
 dat = dat %>% 
@@ -74,6 +74,10 @@ write.table(dat, file="clean_wit1.txt", sep="\t", row.names=F)
 
 dat.acc <- dat %>% 
   filter(feedduration == 500) %>% 
+  mutate(TrialType = dplyr::recode(TrialType, 
+                                   BlackGun = "Black.Gun", WhiteGun = "White.Gun", NeutralGun = "Neutral.Gun",
+                                   BlackTool = "Black.Tool", WhiteTool = "White.Tool", NeutralTool = "Neutral.Tool")) %>% 
+  separate(TrialType, c("Cue", "Probe"), sep = "\\.") %>% 
   group_by(Subject, ExperimentName, mapping, Cue, Probe) %>% 
   summarize(Probe.ACC = mean(Probe.ACC))
 
@@ -81,6 +85,10 @@ write.table(dat.acc, file = "acc_wit1.txt", sep = "\t", row.names = F)
 
 dat.rt <- dat %>% 
   filter(Probe.ACC == 1) %>% 
+  mutate(TrialType = dplyr::recode(TrialType, 
+                                   BlackGun = "Black.Gun", WhiteGun = "White.Gun", NeutralGun = "Neutral.Gun",
+                                   BlackTool = "Black.Tool", WhiteTool = "White.Tool", NeutralTool = "Neutral.Tool")) %>% 
+  separate(TrialType, c("Cue", "Probe"), sep = "\\.") %>% 
   group_by(Subject, ExperimentName, mapping, Cue, Probe) %>% 
   summarize(Probe.RT = mean(Probe.RT))
 
